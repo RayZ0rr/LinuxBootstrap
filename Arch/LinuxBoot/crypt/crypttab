@@ -1,0 +1,5 @@
+# Fields are: name, underlying device, passphrase, cryptsetup options.
+
+# Mount home as /dev/mapper/Chome using LUKS, and prompt for the passphrase at boot time.
+# ( enter the keyfile path at third field to skip passphrase check at boot. See https://wiki.archlinux.org/title/Dm-crypt/System_configuration#crypttab )
+Chome   UUID=home_luks_uuid_number
