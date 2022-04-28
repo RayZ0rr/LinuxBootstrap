@@ -148,10 +148,11 @@ Use `cryptsetup luksDump /dev/sda3` to see more information (keyslots start with
   # mkfs.ext4 -L part_root /dev/mapper/Croot
   # mkfs.ext4 -L part_home /dev/mapper/Chome
   ```
-3. If you have swap
+3. If you have swap ( see [here](https://wiki.archlinux.org/title/Swap#Swap_file_creation) for sawpfile creation as opposed to swap partition ):
 ```
 # mkswap -L part_swap /dev/sda5
 ```
+For swapfile setup with btrfs read more [here](https://wiki.archlinux.org/title/Btrfs#Swap_file).
 ### Mounting
 
 #### First mount root and then others
