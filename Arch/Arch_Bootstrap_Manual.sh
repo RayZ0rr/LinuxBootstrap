@@ -96,10 +96,6 @@ sudo_perms()
   echo "%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm   #ABM" >> /etc/sudoers.d/"$myName"
 }
 
-systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
-  rmmod pcspkr
-  echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
-
 finalize(){ \
   dialog --infobox "Preparing welcome message..." 4 50
   dialog --title "All done!" --msgbox "Congrats! Provided there were no hidden errors, the 'Arch_Boostrap_Manual' script completed successfully and all the programs and configuration files should be in place.\\nUnless manually edited or provided through -u and -k flags, the default username and password are luke and ermanno\\nTo run the new graphical environment, log out and log back in as your new user, then run the command \"startx\" to start the graphical environment (it will start automatically in tty1) or a display/login manager ( eg: lightdm, sddm )." 12 80

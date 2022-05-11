@@ -164,7 +164,7 @@ manualinstall yay-bin || error "Failed to install AUR helper(yay)."
 installationloop
 
 # Install the dotfiles in the user's custom dotfiles directory
-source "${bootstrapFolder}"/scripts/bootloader_manual.sh
+source "${bootstrapFolder}"/scripts/bootloader_auto.sh
 putgitrepo "$bootrepo" "${myGitFolder}/LinuxBoot" "$repobranch"
 bootloader_setup
 

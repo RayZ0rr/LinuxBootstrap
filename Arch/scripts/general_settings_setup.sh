@@ -36,10 +36,6 @@ adduserandpass() {
   export repodir="/home/$myName/.local/src"; sudo -u "$myName" mkdir -p "$repodir" | tee -a "${logFolder}/etc_setup.log"; chown -R "$myName":"$myName" "$(dirname "$repodir")" | tee -a "${logFolder}/etc_setup.log"
 }
 
-systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
-  rmmod pcspkr
-  echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
-
 refreshkeys() { \
   case "$(readlink -f /sbin/init)" in
     *systemd* )

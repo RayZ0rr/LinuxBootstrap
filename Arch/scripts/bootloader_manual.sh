@@ -30,11 +30,11 @@ refind_setup()
     fsEncrypt=$(dialog --no-cancel --inputbox "Invalid option:-\nPlease type 'yes' or 'no'" 10 60 3>&1 1>&2 2>&3 3>&1)
   done
   if [[ "$fstype" == "ext4" ]] ; then
-    cp /usr/share/refind/drivers_x64/ext4_x64.efi /boot/efi/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
+    cp /usr/share/refind/drivers_x64/ext4_x64.efi ${esp}/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_ext4.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_ext4_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/grub.log"
   elif [[ "$fstype" == "btrfs" ]] ; then
-    cp /usr/share/refind/drivers_x64/btrfs_x64.efi /boot/efi/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
+    cp /usr/share/refind/drivers_x64/btrfs_x64.efi ${esp}/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_btrfs.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_btrfs_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/grub.log"
   fi

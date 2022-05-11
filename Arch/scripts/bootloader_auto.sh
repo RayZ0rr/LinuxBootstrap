@@ -22,11 +22,11 @@ refind_setup()
   [[ -z "$home_device" ]] && home_device=$(df -P /home | cut -d '[' -f 1 | awk 'END{print $1}')
   [[ -z "$fstype" ]] && fstype=$(df -T | grep $root_device | awk '{print $2}')
   if [[ "$fstype" == "ext4" ]] ; then
-    cp /usr/share/refind/drivers_x64/ext4_x64.efi /boot/efi/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
+    cp /usr/share/refind/drivers_x64/ext4_x64.efi ${esp}/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_ext4.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_ext4_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
   elif [[ "$fstype" == "btrfs" ]] ; then
-    cp /usr/share/refind/drivers_x64/btrfs_x64.efi /boot/efi/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
+    cp /usr/share/refind/drivers_x64/btrfs_x64.efi ${esp}/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_btrfs.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_btrfs_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
   fi
