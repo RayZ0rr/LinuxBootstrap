@@ -114,10 +114,6 @@ sudo_perms()
   echo "%wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm,/usr/bin/yay   #ABA" >> /etc/sudoers.d/"$myName"
 }
 
-systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
-  rmmod pcspkr
-  echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
-
 finalize(){ \
   dialog --infobox "Preparing welcome message..." 4 50
   dialog --title "All done!" --msgbox "Congrats! Provided there were no hidden errors, the 'Arch_Boostrap_Auto' script completed successfully and all the programs and configuration files should be in place.\\nUnless manually edited or provided through -u and -k flags, the default username and password are luke and ermanno\\nTo run the new graphical environment, log out and log back in as your new user, then run the command \"startx\" to start the graphical environment (it will start automatically in tty1) or a display/login manager ( eg: lightdm, sddm )." 12 80
@@ -129,9 +125,6 @@ finalize(){ \
 
 ### This is how everything happens in an intuitive format and order.
 
-# Check if user is root on Arch distro. Install dialog.
-pacman --noconfirm --needed -Sy dialog archlinux-keyring || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
-
 # Welcome user and pick dotfiles.
 welcomemsg || error "User exited."
 
@@ -141,16 +134,16 @@ usercheck || error "User exited."
 # Last chance for user to back out before install.
 preinstallmsg || error "User exited."
 
+source "${bootstrapFolder}"/scripts/general_settings_setup.sh
+# Refresh Arch keyrings and
+# Check if user is root on Arch distro. Install dialog.
+dialog --infobox "Refreshing Arch Keyring..." 4 40
+pacman --noconfirm --needed -Sy dialog archlinux-keyring >/dev/null 2>&1 || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
+source "${bootstrapFolder}"/scripts/installation_setup.sh
+
 # Allow user to run sudo without password. Since AUR programs must be installed
 # in a fakeroot environment, this is required for all builds with AUR.
-newperms "%wheel ALL=(ALL) NOPASSWD: ALL"
-
-source "${bootstrapFolder}"/scripts/general_settings_setup.sh
-# Refresh Arch keyrings.
-# Refresh Arch keyrings.
-dialog --infobox "Refreshing Arch Keyring..." 4 40
-pacman --noconfirm -S archlinux-keyring >/dev/null 2>&1
-source "${bootstrapFolder}"/scripts/installation_setup.sh
+newperms "%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
 
 # Set and verify username and password.
 adduserandpass || error "Error adding username and/or password."

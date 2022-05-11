@@ -183,6 +183,7 @@ For swapfile setup with btrfs read more [here](https://wiki.archlinux.org/title/
     mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home /dev/mapper/Cbtrfs /mnt/home
     mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log /dev/mapper/Cbtrfs /mnt/var/log
     mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache /dev/mapper/Cbtrfs /mnt/var/cache
+    mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots /dev/mapper/Cbtrfs /mnt/.snapshots
     mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part
     mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level
     ```

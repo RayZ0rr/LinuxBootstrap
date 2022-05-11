@@ -92,8 +92,8 @@ newperms() { # Set special sudoers settings for install (or after).
 sudo_perms()
 {
   echo "#Arch_Boostrap_Manual(ABM) Script settings" >> /etc/sudoers.d/"$myName"
-  echo "%wheel ALL=(ALL) ALL    # ABM" >> /etc/sudoers.d/"$myName"
-  echo "%wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm,/usr/bin/yay   #ABM" >> /etc/sudoers.d/"$myName"
+  echo "%wheel ALL=(ALL:ALL) ALL    # ABM" >> /etc/sudoers.d/"$myName"
+  echo "%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm,/usr/bin/yay   #ABM" >> /etc/sudoers.d/"$myName"
 }
 
 systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
@@ -139,15 +139,16 @@ usercheck || error "User exited."
 # Last chance for user to back out before install.
 preinstallmsg || error "User exited."
 
+source "${bootstrapFolder}"/scripts/general_settings_setup.sh
+# Refresh Arch keyrings and
+# Check if user is root on Arch distro. Install dialog.
+dialog --infobox "Refreshing Arch Keyring..." 4 40
+pacman --noconfirm --needed -Sy dialog archlinux-keyring >/dev/null 2>&1 || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
+source "${bootstrapFolder}"/scripts/installation_setup.sh
+
 # Allow user to run sudo without password. Since AUR programs must be installed
 # in a fakeroot environment, this is required for all builds with AUR.
-newperms "%wheel ALL=(ALL) NOPASSWD: ALL"
-
-source "${bootstrapFolder}"/scripts/general_settings_setup.sh
-# Refresh Arch keyrings.
-dialog --infobox "Refreshing Arch Keyring..." 4 40
-pacman --noconfirm -S archlinux-keyring >/dev/null 2>&1
-source "${bootstrapFolder}"/scripts/installation_setup.sh
+newperms "%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
 
 # Get and verify username and password.
 getuserandpass || error "User exited."

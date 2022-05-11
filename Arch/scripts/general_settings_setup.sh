@@ -30,11 +30,14 @@ systemd_units_enable()
 adduserandpass() { \
   # Adds user `$myName` with password $pass1.
   dialog --infobox "Adding user \"$myName\"..." 4 50
-  useradd -m -G wheel,audio,video "$myName" >/dev/null 2>&1 | tee -a "${logFolder}/etc_setup.log" ||
-  usermod -a -G wheel,audio,video "$myName" && mkdir -p /home/"$myName" && chown "$myName":"$myName" /home/"$myName"
+  useradd -m -G wheel,audio,video "$myName" >/dev/null 2>&1 | tee -a "${logFolder}/etc_setup.log"
   export repodir="/home/$myName/.local/src"; sudo -u "$myName" mkdir -p "$repodir" | tee -a "${logFolder}/etc_setup.log"; chown -R "$myName":"$myName" "$(dirname "$repodir")" | tee -a "${logFolder}/etc_setup.log"
   echo "$myName:$pass1" | chpasswd
   unset pass1 pass2 ;}
+
+systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
+  rmmod pcspkr
+  echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
 
 refreshkeys() { \
   case "$(readlink -f /sbin/init)" in
