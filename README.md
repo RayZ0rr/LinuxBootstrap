@@ -42,14 +42,17 @@ Optional Linux Swap | Label=Swap | /dev/sda4 | 2x or 1.5x times bigger than ram
 ```
 Btrfs device | partition | mountpoint |	  Label	  | Suggested size
 /dev/sda3                               part_btrfs      30 GiB
-/dev/sda3         @           /
+/dev/sda3       @	    /
 /dev/sda3       @home       /home
-/dev/sda3       @var        /var
+/dev/sda3       @var_cache  /var/log
+/dev/sda3       @var_log    /var/cache
+/dev/sda3       @snapshots  /.snapshots
+/dev/sda3       @swap	    /swap_part
 ```
 **ext4 root ('/') and home ('/home').**
 ```
 ext4 device | partition | mountpoint |	  Label	  | Suggested size
-/dev/sda      /dev/sda3       /         part_root       30 GiB
+/dev/sda      /dev/sda3     /		part_root       30 GiB
 /dev/sda      /dev/sda4     /home       part_home   Remaining space
 ```
 

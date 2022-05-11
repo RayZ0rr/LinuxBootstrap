@@ -110,8 +110,8 @@ newperms() { # Set special sudoers settings for install (or after).
 sudo_perms()
 {
   echo "#Arch_Boostrap_Auto(ABA) Script settings" >> /etc/sudoers.d/"$myName"
-  echo "%wheel ALL=(ALL) ALL    # ABA" >> /etc/sudoers.d/"$myName"
-  echo "%wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm,/usr/bin/yay   #ABA" >> /etc/sudoers.d/"$myName"
+  echo "%wheel ALL=(AL:ALLL) ALL    # ABA" >> /etc/sudoers.d/"$myName"
+  echo "%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm   #ABA" >> /etc/sudoers.d/"$myName"
 }
 
 finalize(){ \
