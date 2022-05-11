@@ -84,49 +84,24 @@ addBar(){
   printf "\n--------------------------------------\n" >> "$1"
 }
 
-data_locale()
-{
-  ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime | tee -a "${logFolder}/etc_setup.log"
-  hwclock --systohc | tee -a "${logFolder}/etc_setup.log"
-  echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
-  echo "en_IN UTF-8  " >> /etc/locale.gen
-  # sed -i '177s/.//' /etc/locale.gen
-  # sed -i '168s/.//' /etc/locale.gen
-  locale-gen > /dev/null 2>&1 | tee -a "${logFolder}/etc_setup.log"
-  echo "LANG=en_US.UTF-8" >> /etc/locale.conf
-  echo "KEYMAP=us" >> /etc/vconsole.conf
-  echo "${myHostname}" >> /etc/hostname
-  echo "127.0.0.1 localhost" >> /etc/hosts
-  echo "::1       localhost" >> /etc/hosts
-  echo "127.0.1.1 ${myHostname}.localdomain ${myHostname}" >> /etc/hosts
-  addBar
-}
-# echo "$myName":"$myPass" | chpasswd
+error() { printf "%s\n" "$1" >&2; exit 1; }
 
-# You can add xorg to the installation packages, I usually add it at the DE or WM install script
-# You can remove the tlp package if you are installing on a desktop or vm
+welcomemsg() { \
+  dialog --title "Welcome!" --msgbox "Welcome to Auto Bootstrapping Script!\\n\\nThis script will guide through installation of a fully-featured Arch Linux desktop system.\\n" 10 60
 
-# pacman -S refind networkmanager network-manager-applet dialog mtools dosfstools base-devel linux-headers linux-lts-headers avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils bluez blueman pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion openssh rsync gufw ntfs-3g terminus-font
+  dialog --colors --title "Extra Note" --msgbox "logs of various commands output are placed in \"${logFolder} and ~/bootstrapLogs after successful completion\".\\n" 10 60
 
-# pacman -S --noconfirm xf86-video-amdgpu
-# pacman -S --noconfirm nvidia nvidia-utils nvidia-settings
+  mkdir -p "${logFolder}"
+  }
 
-systemd_units_enable()
-{
-  systemctl enable sddm > /dev/null 2>&1 | tee -a "${logFolder}/systemd_units.log"
-  systemctl enable bluetooth > /dev/null 2>&1 | tee -a "${logFolder}/systemd_units.log"
-  systemctl enable NetworkManager > /dev/null 2>&1 | tee -a "${logFolder}/systemd_units.log"
-  systemctl enable ufw > /dev/null 2>&1 | tee -a "${logFolder}/systemd_units.log"
-  systemctl enable docker > /dev/null 2>&1 | tee -a "${logFolder}/systemd_units.log"
-}
+usercheck() { \
+  ! { id -u "$myName" >/dev/null 2>&1; } ||
+  dialog --colors --title "WARNING!" --yes-label "CONTINUE" --no-label "No wait..." --yesno "The user \`$myName\` already exists on this system. LARBS can install for a user already existing, but it will \\Zboverwrite\\Zn any conflicting settings/dotfiles on the user account.\\n\\nLARBS will \\Zbnot\\Zn overwrite your user files, documents, videos, etc., so don't worry about that, but only click <CONTINUE> if you don't mind your settings being overwritten.\\n\\nNote also that LARBS will change $myName's password to the one you just gave." 14 70
+  }
 
-user_and_pass()
-{
-  useradd -m "$myName" | tee -a "${logFolder}/etc_setup.log"
-  echo "$myName":"$myPass" | chpasswd
-  usermod -aG wheel,audio,video "$myName" | tee -a "${logFolder}/etc_setup.log"
-  export repodir="/home/$myName/.local/src"; sudo -u "$myName" mkdir -p "$repodir" | tee -a "${logFolder}/etc_setup.log"; chown -R "$myName":"$myName" "$(dirname "$repodir")" | tee -a "${logFolder}/etc_setup.log"
-}
+preinstallmsg() { \
+  dialog --title "Let's get this party started!" --yes-label "Let's go!" --no-label "No, nevermind!" --yesno "The rest of the installation will now be totally automated, so you can sit back and relax.\\n\\nIt will take some time, but when done, you can relax even more with your complete system.\\n\\nNow just press <Let's go!> and the system will begin installation!" 13 60 || { clear; exit 1; }
+  }
 
 newperms() { # Set special sudoers settings for install (or after).
   sed -i "/#Arch_Boostrap_Auto(ABA) Script settings/d" /etc/sudoers
@@ -139,102 +114,6 @@ sudo_perms()
   echo "%wheel ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm,/usr/bin/yay   #ABA" >> /etc/sudoers.d/"$myName"
 }
 
-installpkg(){ pacman --noconfirm --needed -S "$1" ;}
-
-error() { printf "%s\n" "$1" >&2; exit 1; }
-
-welcomemsg() { \
-  dialog --title "Welcome!" --msgbox "Welcome to Auto Bootstrapping Script!\\n\\nThis script will guide through installation of a fully-featured Arch Linux desktop system.\\n" 10 60
-
-  dialog --colors --title "Extra Note" --msgbox "logs of various commands output are placed in \"${logFolder} and ~/bootstrapLogs after successful completion\".\\n" 10 60
-
-  mkdir -p "${logFolder}"
-  }
-
-manualinstall() { # Installs $1 manually. Used only for AUR helper here.
-  # Should be run after repodir is created and var is set.
-  dialog --infobox "Installing \"$1\", an AUR helper..." 4 50
-  sudo -u "$myName" mkdir -p "$repodir/$1" | tee -a "${logFolder}"/aurhelper.log
-  sudo -u "$myName" git clone --depth 1 "https://aur.archlinux.org/$1.git" "$repodir/$1" >/dev/null 2>&1 | tee -a "${logFolder}"/aurhelper.log ||
-    { cd "$repodir/$1" || return 1 ; sudo -u "$myName" git pull --force origin master | tee -a "${logFolder}"/aurhelper.log;}
-  cd "$repodir/$1"
-  sudo -u "$myName" -D "$repodir/$1" makepkg --noconfirm -si >/dev/null 2>&1 | tee -a "${logFolder}"/aurhelper.log || return 1
-}
-
-maininstall() { # Installs all needed programs from main repo.
-  dialog --title "ABM Installation" --infobox "Installing \`$1\` ($n of $total). $1 $2" 5 70
-  installpkg "$1" >/dev/null 2>&1 | tee -a "${logFolder}"/maininstall.log
-  addBar "${logFolder}"/maininstall.log
-  }
-
-gitmakeinstall() {
-  progname="$(basename "$1" .git)"
-  dir="$repodir/$progname"
-  dialog --title "ABM Installation" --infobox "Installing \`$progname\` ($n of $total) via \`git\` and \`make\`. $(basename "$1") $2" 5 70
-  sudo -u "$myName" git clone --depth 1 "$1" "$dir" >/dev/null 2>&1 || { cd "$dir" || return 1 ; sudo -u "$myName" git pull --force origin master;}
-  cd "$dir" || exit 1
-  make >/dev/null 2>&1
-  make install >/dev/null 2>&1
-  cd /tmp || return 1 ;}
-
-aurinstall() { \
-  dialog --title "Installation" --infobox "Installing \`$1\` ($n of $total) from the AUR. $1 $2" 5 70
-  echo "$aurinstalled" | grep -q "^$1$" && return 1
-  sudo -u "$myName" $aurhelper -S --noconfirm "$1" >/dev/null 2>&1 | tee -a "${logFolder}/aurhelper.log"
-  }
-
-pipinstall() { \
-  dialog --title "LARBS Installation" --infobox "Installing the Python package \`$1\` ($n of $total). $1 $2" 5 70
-  [ -x "$(command -v "pip")" ] || installpkg python-pip >/dev/null 2>&1
-  yes | pip install "$1" >/dev/null 2>&1 | tee -a "${logFolder}/pipInstall.log"
-  }
-
-installationloop() { \
-  ([ -f "$progsfile" ] && cp "$progsfile" /tmp/progs.csv) || curl -Ls "$progsURL" | sed '/^#/d' > /tmp/progs.csv
-  sed -i '/^#/d' /tmp/progs.csv
-  total=$(wc -l < /tmp/progs.csv)
-  aurinstalled=$(pacman -Qqm)
-  while IFS=, read -r tag program comment; do
-    n=$((n+1))
-    echo "$comment" | grep -q "^\".*\"$" && comment="$(echo "$comment" | sed "s/\(^\"\|\"$\)//g")"
-    case "$tag" in
-      "A") aurinstall "$program" "$comment" ;;
-      "G") gitmakeinstall "$program" "$comment" ;;
-      "P") pipinstall "$program" "$comment" ;;
-      *) maininstall "$program" "$comment" ;;
-    esac
-  done < /tmp/progs.csv ;}
-
-putgitrepo() { # Downloads a gitrepo $1 and places the files in $2 only overwriting conflicts
-  current_path="$PWD"
-  cd "/home/${myName}"
-  dialog --infobox "Downloading config files..." 4 60
-  [ -z "$3" ] && branch="$repobranch" || branch="$3"
-  dir=$(mktemp -d)
-  [ ! -d "$2" ] && sudo -u "$myName" mkdir -p "$2" | tee -a "${logFolder}/putgitrepo.log"
-  chown "$myName":"$myName" "$dir" "$2" | tee -a "${logFolder}/putgitrepo.log"
-  sudo -u "$myName" git clone --recursive -b "$branch" --depth 1 --recurse-submodules "$1" "$dir" >/dev/null 2>&1 | tee -a "${logFolder}/putgitrepo.log"
-  sudo -u "$myName" cp -rfT "$dir" "$2" | tee -a "${logFolder}/putgitrepo.log"
-  cd "$current_path"
-  }
-
-source "${bootstrapFolder}"/scripts/bootloader_auto.sh
-
-bootloader_setup()
-{
-  if [[ "$bootLoader" == "grub" ]] ; then
-    grub_setup
-  elif [[ "$bootLoader" == "refind" ]] ; then
-    refind_setup
-  elif [[ "$bootLoader" == "none" ]] ; then
-    echo "No bootloader setup during bootstrap."
-  fi
-}
-
-source "${bootstrapFolder}"/scripts/dotfiles_setup.sh
-source "${bootstrapFolder}"/scripts/nvim_setup.sh
-source "${bootstrapFolder}"/scripts/suckless_setup.sh
-
 systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
   rmmod pcspkr
   echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
@@ -246,33 +125,30 @@ finalize(){ \
   sudo -u "$myName" cp -r "${logFolder}" /home/${myName}/bootstrapLogs
   }
 
+### THE ACTUAL SCRIPT ###
+
+### This is how everything happens in an intuitive format and order.
+
 # Check if user is root on Arch distro. Install dialog.
 pacman --noconfirm --needed -Sy dialog archlinux-keyring || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
 
 # Welcome user and pick dotfiles.
 welcomemsg || error "User exited."
 
-for x in curl git wget python-pip ca-certificates rsync base-devel python-wheel zsh stow efibootmgr; do
-  # dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to install and configure other programs." 5 70
-  if [[ "$x" == "stow" ]] ; then
-    dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to symlink configuration files." 5 70
-  elif [[ "$x" == "rsync" ]] ; then
-    dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to copy configuration files." 5 70
-  elif [[ "$x" == "efibootmgr" ]] ; then
-    dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required for bootloader." 5 70
-  elif [[ "$x" == "base-devel" ]] ; then
-    dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to install from aur." 5 70
-  elif [[ "$x" == "python-pip" ]] ; then
-    dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to install with python." 5 70
-  elif [[ "$x" == "python-wheel" ]] ; then
-    dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to install with python pip." 5 70
-  else
-    dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to install and configure other programs." 5 70
-  fi
-  installpkg "$x" | tee -a "${logFolder}/essential_packages.log"
-done
+# Give warning if user already exists.
+usercheck || error "User exited."
 
-user_and_pass || error "Error adding username and/or password."
+# Last chance for user to back out before install.
+preinstallmsg || error "User exited."
+
+# Allow user to run sudo without password. Since AUR programs must be installed
+# in a fakeroot environment, this is required for all builds with AUR.
+newperms "%wheel ALL=(ALL) NOPASSWD: ALL"
+
+source "${bootstrapFolder}"/scripts/general_settings.sh
+
+# Set and verify username and password.
+adduserandpass || error "Error adding username and/or password."
 
 data_locale
 
@@ -280,9 +156,9 @@ data_locale
 grep -q "ILoveCandy" /etc/pacman.conf || sed -i "/#VerbosePkgLists/a ILoveCandy" /etc/pacman.conf
 sed -i "s/^#ParallelDownloads = 8$/ParallelDownloads = 5/;s/^#Color$/Color/" /etc/pacman.conf
 
-# Allow user to run sudo without password. Since AUR programs must be installed
-# in a fakeroot environment, this is required for all builds with AUR.
-newperms "%wheel ALL=(ALL) NOPASSWD: ALL"
+# Refresh Arch keyrings.
+# refreshkeys || error "Error automatically refreshing Arch keyring. Consider doing so manually."
+source "${bootstrapFolder}"/scripts/installation_setup.sh
 
 manualinstall yay-bin || error "Failed to install AUR helper(yay)."
 
@@ -295,23 +171,35 @@ manualinstall yay-bin || error "Failed to install AUR helper(yay)."
 installationloop
 
 # Install the dotfiles in the user's custom dotfiles directory
+source "${bootstrapFolder}"/scripts/bootloader_manual.sh
 putgitrepo "$bootrepo" "${myGitFolder}/LinuxBoot" "$repobranch"
 bootloader_setup
 
-[ "$doDotfilesSetup" == "yes" ] && putgitrepo "$dotfilesrepo" "${myDots}" "$repobranch"
-[ "$doDotfilesSetup" == "yes" ] && setup_dotfiles_config
+# Install the dotfiles in the user's custom dotfiles directory
+if [[ "$doDotfilesSetup" == "yes" ]] ; then
+  source "${bootstrapFolder}"/scripts/dotfiles_setup.sh
+  putgitrepo "$dotfilesrepo" "${myDots}" "$repobranch"
+  setup_dotfiles_config
+fi
+if [[ "$doNvimSetup" == "yes" ]] ; then
+  source "${bootstrapFolder}"/scripts/nvim_setup.sh
+  putgitrepo "$nvimrepo" "${myGitFolder}/myNeovim" "$repobranch"
+  setup_nvim_config
 
-[ "$doNvimSetup" == "yes" ] && putgitrepo "$nvimrepo" "${myGitFolder}/myNeovim" "$repobranch"
-[ "$doNvimSetup" == "yes" ] && setup_nvim_config
-
-[ "$doSucklessSetup" == "yes" ] && putgitrepo "$sucklessrepo" "${myGitFolder}/mySuckless" "$repobranch"
-[ "$doSucklessSetup" == "yes" ] && setup_suckless_config
+fi
+if [[ "$doSucklessSetup" == "yes" ]] ; then
+  source "${bootstrapFolder}"/scripts/suckless_setup.sh
+  putgitrepo "$sucklessrepo" "${myGitFolder}/mySuckless" "$repobranch"
+  setup_suckless_config
+fi
 
 systemd_units_enable
 
 # Most important command! Get rid of the beep!
 systembeepoff
 
+# Make zsh the default shell for the user.
+# chsh -s /bin/zsh "$myName" >/dev/null 2>&1
 sudo -u "$myName" mkdir -p "/home/$myName/.cache"
 
 # Tap to click
@@ -331,6 +219,7 @@ newperms "#%wheel ALL=(ALL) ALL"
 
 sudo_perms
 
+# Last message! Install complete!
 finalize
 clear
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\n\e[0m"

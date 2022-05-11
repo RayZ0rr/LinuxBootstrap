@@ -185,3 +185,17 @@ grub_setup()
   cd "$current_path"
 }
 
+bootloader_setup()
+{
+  bootLoader=$(dialog --no-cancel --inputbox "Enter the bootloader required :- ( grub or refind or none )" 10 60 3>&1 1>&2 2>&3 3>&1)
+  while ! [[ $bootLoader == "refind" || $bootLoader == "grub" ]]; do
+    bootLoader=$(dialog --no-cancel --inputbox "Please choose from the options in the parenthesis :- ( grub or refind or none )" 10 60 3>&1 1>&2 2>&3 3>&1)
+  done
+  if [[ "$bootLoader" == "grub" ]] ; then
+    grub_setup
+  elif [[ "$bootLoader" == "refind" ]] ; then
+    refind_setup
+  elif [[ "$bootLoader" == "none" ]] ; then
+    echo "No bootloader setup during bootstrap."
+  fi
+}

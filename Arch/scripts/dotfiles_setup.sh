@@ -22,7 +22,10 @@ setup_dotfiles_config(){
   dialog --title "Dotfiles Setup" --infobox "Setting up ~/.local directory with files and folders from ~/$myDots/.local." 5 70
   ! [[ -d "/home/${myName}/.local/bin" ]] && sudo -u "$myName" mkdir -p "/home/${myName}/.local/bin" | tee -a "${logFolder}/setupLocalConfig.log"
   sudo -u "$myName" stow -v --no-folding -t ".local/bin" -d "${myDots}/.local" -S "bin" > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
-  sudo -u "$myName" cp -r "${myDots}/.local/src"/*.png .local/src/ > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
+  ! [[ -d "/home/${myName}/.local/src" ]] && sudo -u "$myName" mkdir -p "/home/${myName}/.local/src" | tee -a "${logFolder}/setupLocalConfig.log"
+  stow -v --no-folding --ignore="BackUp" -t ".local/src" -d "${myDots}/.local" -S "src"
+  # sudo -u "$myName" cp -r "${myDots}/.local/src"/*.png .local/src/ > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
+  # sudo -u "$myName" ln -sf ../../"${myDots}/.local/src"/battery_charge_notify.sh .local/src/battery_charge_notify.sh
   sudo -u "$myName" rsync -avz "${myDots}/.local/share/rofi/themes" .local/src/rofi/ > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
   dialog --title "Dotfiles Setup" --infobox "Setting up fonts in ~/.local/share/fonts directory.\nUse 'fc-cache -fv' after login to load fonts." 5 70
   sudo -u "$myName" "${bootstrapFolder}"/scripts/myfonts get > /dev/null 2>&1 | tee -a "${logFolder}/myfonts.log"

@@ -140,3 +140,13 @@ grub_setup()
   cd "$current_path"
 }
 
+bootloader_setup()
+{
+  if [[ "$bootLoader" == "grub" ]] ; then
+    grub_setup
+  elif [[ "$bootLoader" == "refind" ]] ; then
+    refind_setup
+  elif [[ "$bootLoader" == "none" ]] ; then
+    echo "No bootloader setup during bootstrap."
+  fi
+}
