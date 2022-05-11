@@ -145,7 +145,12 @@ preinstallmsg || error "User exited."
 # in a fakeroot environment, this is required for all builds with AUR.
 newperms "%wheel ALL=(ALL) NOPASSWD: ALL"
 
-source "${bootstrapFolder}"/scripts/general_settings.sh
+source "${bootstrapFolder}"/scripts/general_settings_setup.sh
+# Refresh Arch keyrings.
+# Refresh Arch keyrings.
+dialog --infobox "Refreshing Arch Keyring..." 4 40
+pacman --noconfirm -S archlinux-keyring >/dev/null 2>&1
+source "${bootstrapFolder}"/scripts/installation_setup.sh
 
 # Set and verify username and password.
 adduserandpass || error "Error adding username and/or password."
@@ -155,10 +160,6 @@ data_locale
 # Make pacman colorful, concurrent downloads and Pacman eye-candy.
 grep -q "ILoveCandy" /etc/pacman.conf || sed -i "/#VerbosePkgLists/a ILoveCandy" /etc/pacman.conf
 sed -i "s/^#ParallelDownloads = 8$/ParallelDownloads = 5/;s/^#Color$/Color/" /etc/pacman.conf
-
-# Refresh Arch keyrings.
-# refreshkeys || error "Error automatically refreshing Arch keyring. Consider doing so manually."
-source "${bootstrapFolder}"/scripts/installation_setup.sh
 
 manualinstall yay-bin || error "Failed to install AUR helper(yay)."
 

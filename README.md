@@ -169,16 +169,22 @@ For swapfile setup with btrfs read more [here](https://wiki.archlinux.org/title/
     ```
     btrfs sub cr /mnt/@
     btrfs sub cr /mnt/@home
-    btrfs sub cr /mnt/@var
+    btrfs sub cr /mnt/@var_log
+    btrfs sub cr /mnt/@var_cache
+    btrfs sub cr /mnt/@snapshots
+    btrfs sub cr /mnt/@swap
+    umount /mnt
     ```
 
     ```
-    umount /mnt
     # If using unencrypted replace '/dev/mapper/Cbtrfs' with approriate one. Eg :- '/dev/sda3' .
-    mount -o relatime,space_cache=v2,ssd,compress=lzo,subvol=@ /dev/mapper/Cbtrfs /mnt
-    mkdir -p /mnt/{boot,efi,home,var}
-    mount -o relatime,space_cache=v2,ssd,compress=lzo,subvol=@home /dev/mapper/Cbtrfs /mnt/home
-    mount -o relatime,space_cache=v2,ssd,compress=lzo,subvol=@var /dev/mapper/Cbtrfs /mnt/var
+    mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@ /dev/mapper/Cbtrfs /mnt
+    mkdir -p /mnt/{boot,efi,home,var/log,var/cache,.snapshots,root/btrfs-top-level,swap_part}
+    mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home /dev/mapper/Cbtrfs /mnt/home
+    mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log /dev/mapper/Cbtrfs /mnt/var/log
+    mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache /dev/mapper/Cbtrfs /mnt/var/cache
+    mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part
+    mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level
     ```
     2. If you have ext4 partitions for root and home
     ```
