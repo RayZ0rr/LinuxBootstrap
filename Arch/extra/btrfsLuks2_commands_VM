@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+SingleCommand() {
+cryptsetup open /dev/vda3 Cbtrfs --key-file mykeyfile.bin && \
+  cryptsetup open /dev/vda3 Cbtrfs && \
+  mkfs.fat -F 32 -n part_efi /dev/vda1 && \
+  mkfs.ext4 -L part_boot /dev/vda2 && \
+  mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs && \
+  mount /dev/mapper/Cbtrfs /mnt && \
+  btrfs sub cr /mnt/@ && \
+  btrfs sub cr /mnt/@home && \
+  btrfs sub cr /mnt/@var_log && \
+  btrfs sub cr /mnt/@var_cache && \
+  btrfs sub cr /mnt/@snapshots && \
+  btrfs sub cr /mnt/@swap && \
+  umount /mnt && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@ /dev/mapper/Cbtrfs /mnt && \
+  mkdir -p /mnt/{boot,efi,home,var/log,var/cache,.snapshots,root/btrfs-top-level,swap_part} && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home /dev/mapper/Cbtrfs /mnt/home && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log /dev/mapper/Cbtrfs /mnt/var/log && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache /dev/mapper/Cbtrfs /mnt/var/cache && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots /dev/mapper/Cbtrfs /mnt/.snapshots && \
+  mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part && \
+  mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level && \
+  mount /dev/vda1 /mnt/efi && \
+  mount /dev/vda2 /mnt/boot && \
+  pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode && \
+  genfstab -U /mnt >> /mnt/etc/fstab && \
+  mkdir /mnt/root && \
+  mv mykeyfile.bin /mnt/root/ && \
+  arch-chroot /mnt
+}
+
+MultiCommands() {
+cryptsetup open /dev/vda3 Cbtrfs --key-file mykeyfile.bin &&
+cryptsetup open /dev/vda3 Cbtrfs &&
+
+mkfs.fat -F 32 -n part_efi /dev/vda1 &&
+mkfs.ext4 -L part_boot /dev/vda2 &&
+
+mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs &&
+mount /dev/mapper/Cbtrfs /mnt &&
+
+btrfs sub cr /mnt/@ &&
+btrfs sub cr /mnt/@home &&
+btrfs sub cr /mnt/@var_log &&
+btrfs sub cr /mnt/@var_cache &&
+btrfs sub cr /mnt/@snapshots &&
+btrfs sub cr /mnt/@swap &&
+umount /mnt &&
+
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@ /dev/mapper/Cbtrfs /mnt &&
+mkdir -p /mnt/{boot,efi,home,var/log,var/cache,.snapshots,root/btrfs-top-level,swap_part} &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home /dev/mapper/Cbtrfs /mnt/home &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log /dev/mapper/Cbtrfs /mnt/var/log &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache /dev/mapper/Cbtrfs /mnt/var/cache &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots /dev/mapper/Cbtrfs /mnt/.snapshots &&
+mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part &&
+mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level &&
+
+mount /dev/vda1 /mnt/efi &&
+mount /dev/vda2 /mnt/boot &&
+
+pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode &&
+genfstab -U /mnt >> /mnt/etc/fstab &&
+mkdir /mnt/root &&
+mv mykeyfile.bin /mnt/root/ &&
+arch-chroot /mnt
+}
+
+MultiCommands
