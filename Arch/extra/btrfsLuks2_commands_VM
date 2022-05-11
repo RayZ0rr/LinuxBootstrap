@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
+# curl -O -L https://raw.githubusercontent.com/RayZ0rr/LinuxBootstrap/main/Arch/extra/btrfsLuks2_commands_VM
+
+deviceName="/dev/vda"
+
 SingleCommand() {
-cryptsetup open /dev/vda3 Cbtrfs --key-file mykeyfile.bin && \
-  cryptsetup open /dev/vda3 Cbtrfs && \
-  mkfs.fat -F 32 -n part_efi /dev/vda1 && \
-  mkfs.ext4 -L part_boot /dev/vda2 && \
+cryptsetup open ${deviceName}3 Cbtrfs --key-file mykeyfile.bin && \
+  mkfs.fat -F 32 -n part_efi ${deviceName}1 && \
+  mkfs.ext4 -L part_boot ${deviceName}2 && \
   mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs && \
   mount /dev/mapper/Cbtrfs /mnt && \
   btrfs sub cr /mnt/@ && \
@@ -22,8 +25,8 @@ cryptsetup open /dev/vda3 Cbtrfs --key-file mykeyfile.bin && \
   mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots /dev/mapper/Cbtrfs /mnt/.snapshots && \
   mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part && \
   mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level && \
-  mount /dev/vda1 /mnt/efi && \
-  mount /dev/vda2 /mnt/boot && \
+  mount ${deviceName}1 /mnt/efi && \
+  mount ${deviceName}2 /mnt/boot && \
   pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode && \
   genfstab -U /mnt >> /mnt/etc/fstab && \
   mkdir /mnt/root && \
@@ -32,11 +35,10 @@ cryptsetup open /dev/vda3 Cbtrfs --key-file mykeyfile.bin && \
 }
 
 MultiCommands() {
-cryptsetup open /dev/vda3 Cbtrfs --key-file mykeyfile.bin &&
-cryptsetup open /dev/vda3 Cbtrfs &&
+cryptsetup open ${deviceName}3 Cbtrfs --key-file mykeyfile.bin &&
 
-mkfs.fat -F 32 -n part_efi /dev/vda1 &&
-mkfs.ext4 -L part_boot /dev/vda2 &&
+mkfs.fat -F 32 -n part_efi ${deviceName}1 &&
+mkfs.ext4 -L part_boot ${deviceName}2 &&
 
 mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs &&
 mount /dev/mapper/Cbtrfs /mnt &&
@@ -58,8 +60,8 @@ mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvo
 mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part &&
 mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level &&
 
-mount /dev/vda1 /mnt/efi &&
-mount /dev/vda2 /mnt/boot &&
+mount ${deviceName}1 /mnt/efi &&
+mount ${deviceName}2 /mnt/boot &&
 
 pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode &&
 genfstab -U /mnt >> /mnt/etc/fstab &&
