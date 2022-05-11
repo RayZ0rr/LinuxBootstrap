@@ -107,7 +107,7 @@ finalize(){ \
   sudo -u "$myName" cp -r "${logFolder}" /home/${myName}/bootstrapLogs
   }
 
-getuserandpass() { \
+getuserandpass() {
   # Prompts user for new username an password.
   getName=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit 1
   while ! echo "$getName" | grep -q "^[a-z_][a-z0-9_-]*$"; do
@@ -115,12 +115,17 @@ getuserandpass() { \
   done
   [ -n "$getName" ] && myName="$getName"
   pass1=$(dialog --no-cancel --passwordbox "Enter a password for that user." 10 60 3>&1 1>&2 2>&3 3>&1)
+  while ! echo "$pass1" | grep -q "^[a-z_][a-z0-9_-]*$"; do
+    pass1=$(dialog --no-cancel --passwordbox "Enter a valid password." 10 60 3>&1 1>&2 2>&3 3>&1)
+  done
   pass2=$(dialog --no-cancel --passwordbox "Retype password." 10 60 3>&1 1>&2 2>&3 3>&1)
   while ! [ "$pass1" = "$pass2" ]; do
     unset pass2
     pass1=$(dialog --no-cancel --passwordbox "Passwords do not match.\\n\\nEnter password again." 10 60 3>&1 1>&2 2>&3 3>&1)
     pass2=$(dialog --no-cancel --passwordbox "Retype password." 10 60 3>&1 1>&2 2>&3 3>&1)
-  done ;}
+  done
+  [ -n "$pass1" ] && myPass="$pass1"
+}
 
 
 ### THE ACTUAL SCRIPT ###
@@ -140,10 +145,6 @@ usercheck || error "User exited."
 preinstallmsg || error "User exited."
 
 source "${bootstrapFolder}"/scripts/general_settings_setup.sh
-# Refresh Arch keyrings and
-# Check if user is root on Arch distro. Install dialog.
-dialog --infobox "Refreshing Arch Keyring..." 4 40
-pacman --noconfirm --needed -Sy dialog archlinux-keyring >/dev/null 2>&1 || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
 source "${bootstrapFolder}"/scripts/installation_setup.sh
 
 # Allow user to run sudo without password. Since AUR programs must be installed

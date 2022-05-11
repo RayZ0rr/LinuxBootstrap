@@ -15,7 +15,7 @@ data_locale()
   echo "127.0.0.1 localhost" >> /etc/hosts
   echo "::1       localhost" >> /etc/hosts
   echo "127.0.1.1 ${myHostname}.localdomain ${myHostname}" >> /etc/hosts
-  addBar
+  addBar "${logFolder}/etc_setup.log"
 }
 
 systemd_units_enable()
@@ -27,13 +27,14 @@ systemd_units_enable()
   # systemctl enable docker > /dev/null 2>&1 | tee -a "${logFolder}/systemd_units.log"
 }
 
-adduserandpass() { \
-  # Adds user `$myName` with password $pass1.
+adduserandpass() {
+  # Adds user `$myName` with password $pmyPass.
   dialog --infobox "Adding user \"$myName\"..." 4 50
-  useradd -m -G wheel,audio,video "$myName" >/dev/null 2>&1 | tee -a "${logFolder}/etc_setup.log"
+  useradd -m "$myName" | tee -a "${logFolder}/etc_setup.log"
+  echo "$myName":"$myPass" | chpasswd
+  usermod -aG wheel,audio,video "$myName" | tee -a "${logFolder}/etc_setup.log"
   export repodir="/home/$myName/.local/src"; sudo -u "$myName" mkdir -p "$repodir" | tee -a "${logFolder}/etc_setup.log"; chown -R "$myName":"$myName" "$(dirname "$repodir")" | tee -a "${logFolder}/etc_setup.log"
-  echo "$myName:$pass1" | chpasswd
-  unset pass1 pass2 ;}
+}
 
 systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
   rmmod pcspkr

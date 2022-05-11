@@ -125,6 +125,9 @@ finalize(){ \
 
 ### This is how everything happens in an intuitive format and order.
 
+# Check if user is root on Arch distro. Install dialog.
+pacman --noconfirm --needed -Sy dialog archlinux-keyring || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
+
 # Welcome user and pick dotfiles.
 welcomemsg || error "User exited."
 
@@ -135,10 +138,6 @@ usercheck || error "User exited."
 preinstallmsg || error "User exited."
 
 source "${bootstrapFolder}"/scripts/general_settings_setup.sh
-# Refresh Arch keyrings and
-# Check if user is root on Arch distro. Install dialog.
-dialog --infobox "Refreshing Arch Keyring..." 4 40
-pacman --noconfirm --needed -Sy dialog archlinux-keyring >/dev/null 2>&1 || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
 source "${bootstrapFolder}"/scripts/installation_setup.sh
 
 # Allow user to run sudo without password. Since AUR programs must be installed
