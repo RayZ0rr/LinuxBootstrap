@@ -4,15 +4,15 @@ refind_setup()
 {
   current_path="$PWD"
   cd "/home/${myName}"
-  espPart=$(mount | grep 'efi ' | cut -d' ' -f 1)
-  [ -z "${esp}" ] && esp=$(lsblk -no MOUNTPOINT $espPart | tee -a "${logFolder}/refind.log")
+  esp_device=$(mount | grep 'efi ' | cut -d' ' -f 1)
+  [ -z "${esp_mount}" ] && esp_mount=$(lsblk -no MOUNTPOINT $esp_device | tee -a "${logFolder}/refind.log")
   dialog --title "Bootloader setup" --infobox "Installing rEFInd which is required to boot the system." 5 70
   refind-install >/dev/null 2>&1 | tee -a "${logFolder}/refind.log"
   dialog --title "Bootloader setup" --infobox "Setting up rEFInd which is required to boot the system." 5 70
-  cp ${esp}/EFI/refind/refind.conf ${esp}/EFI/refind/refind_sample.conf | tee -a "${logFolder}/refind.log"
-  cp -r "${bootFolder}/refind/themes/refind.conf" ${esp}/EFI/refind | tee -a "${logFolder}/refind.log"
-  rsync -avz --delete "${bootFolder}/refind/themes/refind-theme-regular_FINAL/" ${esp}/EFI/refind/themes/refind-theme-regular | tee -a "${logFolder}/refind.log"
-  rsync -avz --delete "${bootFolder}/refind/themes/bg.png" ${esp}/EFI/refind/themes/refind-theme-regular/bg.png | tee -a "${logFolder}/refind.log"
+  cp ${esp_mount}/EFI/refind/refind.conf ${esp_mount}/EFI/refind/refind_sample.conf | tee -a "${logFolder}/refind.log"
+  cp -r "${bootFolder}/refind/themes/refind.conf" ${esp_mount}/EFI/refind | tee -a "${logFolder}/refind.log"
+  rsync -avz --delete "${bootFolder}/refind/themes/refind-theme-regular_FINAL/" ${esp_mount}/EFI/refind/themes/refind-theme-regular | tee -a "${logFolder}/refind.log"
+  rsync -avz --delete "${bootFolder}/refind/themes/bg.png" ${esp_mount}/EFI/refind/themes/refind-theme-regular/bg.png | tee -a "${logFolder}/refind.log"
   [[ -z "$root_device" ]] && root_device=$(df -P /etc/fstab | cut -d '[' -f 1 | awk 'END{print $1}')
   # [[ -z "$root_device" ]] && root_device=$(findmnt -n -o SOURCE / | cut -d '[' -f 1)
   # [[ -z "$root_device" ]] && root_device=$(mount | grep ' / ' | cut -d' ' -f 1)
@@ -22,31 +22,31 @@ refind_setup()
   [[ -z "$home_device" ]] && home_device=$(df -P /home | cut -d '[' -f 1 | awk 'END{print $1}')
   [[ -z "$fstype" ]] && fstype=$(df -T | grep $root_device | awk '{print $2}')
   if [[ "$fstype" == "ext4" ]] ; then
-    cp /usr/share/refind/drivers_x64/ext4_x64.efi ${esp}/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
+    cp /usr/share/refind/drivers_x64/ext4_x64.efi ${esp_mount}/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_ext4.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_ext4_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
   elif [[ "$fstype" == "btrfs" ]] ; then
-    cp /usr/share/refind/drivers_x64/btrfs_x64.efi ${esp}/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
+    cp /usr/share/refind/drivers_x64/btrfs_x64.efi ${esp_mount}/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_btrfs.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_btrfs_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
   fi
   if [[ "${fsEncrypt}" == "yes" ]] ; then
     [[ -z "${root_name}" ]] && root_name=$(echo "${root_device}" | sed 's#/dev/mapper/##')
-    [[ -z "${crypt_device_root}" ]] && crypt_device_root="/dev/$(lsblk -frn | grep "${root_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
-    # [[ -z "${crypt_device_root}" ]] && crypt_device_root=$(blkid | grep -i "crypt*" | awk '{print $1}' | cut -d ":" -f 1)
-    crypt_uuid_root=$(blkid -s UUID -o value $crypt_device_root | tee -a "${logFolder}/refind.log")
-    sed -i "s/luks_uuid_number/$crypt_uuid_root/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
+    [[ -z "${crypt_root_device}" ]] && crypt_root_device="/dev/$(lsblk -frn | grep "${root_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
+    # [[ -z "${crypt_root_device}" ]] && crypt_root_device=$(blkid | grep -i "crypt*" | awk '{print $1}' | cut -d ":" -f 1)
+    crypt_root_uuid=$(blkid -s UUID -o value $crypt_root_device | tee -a "${logFolder}/refind.log")
+    sed -i "s/luks_uuid_number/$crypt_root_uuid/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     sed -i 's/^HOOK.*/&\n&/' /etc/mkinitcpio.conf | tee -a "${logFolder}/refind.log"
     sed -i '0,/^HOOK.*/s/^HOOK/#HOOK/' /etc/mkinitcpio.conf | tee -a "${logFolder}/refind.log"
     hooks="HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)"
     sed -i "s/^HOOK.*/$hooks/" /etc/mkinitcpio.conf | tee -a "${logFolder}/refind.log"
     if [[ "$fstype" == "ext4" ]] ; then
       [[ -z "${home_name}" ]] && home_name=$(echo "${home_device}" | sed 's#/dev/mapper/##')
-      [[ -z "${crypt_device_home}" ]] && crypt_device_home="/dev/$(lsblk -frn | grep "${home_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
-      crypt_uuid_home=$(blkid -s UUID -o value $crypt_device_home | tee -a "${logFolder}/refind.log")
+      [[ -z "${crypt_home_device}" ]] && crypt_home_device="/dev/$(lsblk -frn | grep "${home_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
+      crypt_home_uuid=$(blkid -s UUID -o value $crypt_home_device | tee -a "${logFolder}/refind.log")
       cp "${bootFolder}"/crypt/crypttab /etc/crypttab
       # sed -i "/home_luks_uuid_number/ s/^Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/refind.log"
-      sed -i "s/home_luks_uuid_number/$crypt_uuid_home/" /etc/crypttab | tee -a "${logFolder}/refind.log"
+      sed -i "s/home_luks_uuid_number/$crypt_home_uuid/" /etc/crypttab | tee -a "${logFolder}/refind.log"
       sed -i "s/Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/refind.log"
     fi
   fi
@@ -75,10 +75,10 @@ grub_setup()
 {
   current_path="$PWD"
   cd "/home/${myName}"
-  espPart=$(mount | grep 'efi ' | cut -d' ' -f 1)
-  [ -z "${esp}" ] && esp=$(lsblk -no MOUNTPOINT ${espPart} | tee -a "${logFolder}/grub.log")
+  esp_device=$(mount | grep 'efi ' | cut -d' ' -f 1)
+  [ -z "${esp_mount}" ] && esp_mount=$(lsblk -no MOUNTPOINT ${esp_device} | tee -a "${logFolder}/grub.log")
   dialog --title "Bootloader setup" --infobox "Installing GRUB which is required to boot the system." 5 70
-  grub-install --target=x86_64-efi --efi-directory=${esp} --bootloader-id=Arch > /dev/null 2>&1 | tee -a "${logFolder}/grub.log"
+  grub-install --target=x86_64-efi --efi-directory=${esp_mount} --bootloader-id=Arch > /dev/null 2>&1 | tee -a "${logFolder}/grub.log"
   dialog --title "Bootloader setup" --infobox "Setting up GRUB which is required to boot the system." 5 70
   rsync -avz "${bootFolder}"/grub/themes/dedsec-grub2-theme_FINAL/ /boot/grub/themes/dedsec-grub2-theme/ >/dev/null 2>&1 | tee -a "${logFolder}/grub.log"
   sed -i "s/^#GRUB_THEME=.*/#GRUB_THEME=\"\"\nGRUB_THEME=\"\/boot\/grub\/themes\/dedsec-grub2-theme\/theme.txt\"/" /etc/default/grub | tee -a "${logFolder}/grub.log"
@@ -100,21 +100,21 @@ grub_setup()
   fi
   if [[ "${fsEncrypt}" == "yes" ]] ; then
     [[ -z "${root_name}" ]] && root_name=$(echo "${root_device}" | sed 's#/dev/mapper/##')
-    [[ -z "${crypt_device_root}" ]] && crypt_device_root="/dev/$(lsblk -frn | grep "${root_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
-    # [[ -z "${crypt_device_root}" ]] && crypt_device_root=$(blkid | grep -i "crypt*" | awk '{print $1}' | cut -d ":" -f 1)
-    crypt_uuid_root=$(blkid -s UUID -o value $crypt_device_root | tee -a "${logFolder}/grub.log")
-    sed -i "s/luks_uuid_number/$crypt_uuid_root/" /boot/grub/custom.cfg | tee -a "${logFolder}/grub.log"
+    [[ -z "${crypt_root_device}" ]] && crypt_root_device="/dev/$(lsblk -frn | grep "${root_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
+    # [[ -z "${crypt_root_device}" ]] && crypt_root_device=$(blkid | grep -i "crypt*" | awk '{print $1}' | cut -d ":" -f 1)
+    crypt_root_uuid=$(blkid -s UUID -o value $crypt_root_device | tee -a "${logFolder}/grub.log")
+    sed -i "s/luks_uuid_number/$crypt_root_uuid/" /boot/grub/custom.cfg | tee -a "${logFolder}/grub.log"
     sed -i 's/^HOOK.*/&\n&/' /etc/mkinitcpio.conf | tee -a "${logFolder}/grub.log"
     sed -i '0,/^HOOK.*/s/^HOOK/#HOOK/' /etc/mkinitcpio.conf | tee -a "${logFolder}/grub.log"
     hooks="HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)"
     sed -i "s/^HOOK.*/$hooks/" /etc/mkinitcpio.conf | tee -a "${logFolder}/grub.log"
     if [[ "$fstype" == "ext4" ]] ; then
       [[ -z "${home_name}" ]] && home_name=$(echo "${home_device}" | sed 's#/dev/mapper/##')
-      [[ -z "${crypt_device_home}" ]] && crypt_device_home="/dev/$(lsblk -frn | grep "${home_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
-      crypt_uuid_home=$(blkid -s UUID -o value $crypt_device_home | tee -a "${logFolder}/grub.log")
+      [[ -z "${crypt_home_device}" ]] && crypt_home_device="/dev/$(lsblk -frn | grep "${home_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
+      crypt_home_uuid=$(blkid -s UUID -o value $crypt_home_device | tee -a "${logFolder}/grub.log")
       cp "${bootFolder}"/crypt/crypttab /etc/crypttab
       # sed -i "/home_luks_uuid_number/ s/^Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/grub.log"
-      sed -i "s/home_luks_uuid_number/$crypt_uuid_home/" /etc/crypttab | tee -a "${logFolder}/grub.log"
+      sed -i "s/home_luks_uuid_number/$crypt_home_uuid/" /etc/crypttab | tee -a "${logFolder}/grub.log"
       sed -i "s/Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/grub.log"
     fi
   fi

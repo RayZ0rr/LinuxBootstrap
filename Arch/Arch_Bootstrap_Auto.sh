@@ -44,7 +44,7 @@ doSucklessSetup="yes"
 [ -z "$repobranch" ] && repobranch="main"
 [ -z "$fstype" ] && fstype="btrfs"
 [ -z "$bootLoader" ] && bootLoader="grub"
-[ -z "$esp" ] && esp="/efi"
+[ -z "$esp_mount" ] && esp_mount="/efi"
 [ -z "$boot_mount" ] && boot_mount="/boot"
 [ -z "$boot_device" ] && boot_device=""
 # -----------------------------------------------------
