@@ -213,9 +213,9 @@ swapon /dev/sda5
 ### Initializing root
 * Change `linux-lts` to `linux` or any other [supported kernels](https://wiki.archlinux.org/title/Kernel#Officially_supported_kernels).
 * Add [microcode](https://wiki.archlinux.org/title/Microcode) (`intel-ucode` or `amd-ucode`) and [graphics drivers](https://wiki.archlinux.org/title/Xorg#Driver_installation) as required.
-* Install [bootloader](https://wiki.archlinux.org/title/Arch_boot_process#Boot_loader) of your choice (only grub and rEFInd supported for bootstrap). In the example below, `grub` is used.
+* Install [bootloader](https://wiki.archlinux.org/title/Arch_boot_process#Boot_loader) of your choice (only grub and rEFInd supported for bootstrap). In the example below, `refind` is used as bootloader. `nvidia-lts` and `intel-ucode` are also added.
 ```
-pacstrap /mnt base linux-lts linux-firmware git vim grub efibootmgr
+pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode
 genfstab -U /mnt >> /mnt/etc/fstab
 # See note below.
 arch-chroot /mnt

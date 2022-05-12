@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # curl -O -L https://raw.githubusercontent.com/RayZ0rr/LinuxBootstrap/main/Arch/extra/btrfsLuks2_commands
+# chmod +x btrfsLuks2_commands
 
 deviceName="/dev/vda"
 

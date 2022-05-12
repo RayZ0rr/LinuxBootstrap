@@ -9,6 +9,7 @@ refind_setup()
   refind-install >/dev/null 2>&1 | tee -a "${logFolder}/refind.log"
   dialog --title "Bootloader setup" --infobox "Setting up rEFInd which is required to boot the system." 5 70
   cp ${esp_mount}/EFI/refind/refind.conf ${esp_mount}/EFI/refind/refind_sample.conf | tee -a "${logFolder}/refind.log"
+  ! [[ -d "${esp_mount}/EFI/refind/themes" ]] && mkdir -p ${esp_mount}/EFI/refind/themes
   cp -r "${bootFolder}/refind/themes/refind.conf" ${esp_mount}/EFI/refind | tee -a "${logFolder}/refind.log"
   rsync -avz --delete "${bootFolder}/refind/themes/refind-theme-regular_FINAL/" ${esp_mount}/EFI/refind/themes/refind-theme-regular | tee -a "${logFolder}/refind.log"
   rsync -avz --delete "${bootFolder}/refind/themes/bg.png" ${esp_mount}/EFI/refind/themes/refind-theme-regular/bg.png | tee -a "${logFolder}/refind.log"
