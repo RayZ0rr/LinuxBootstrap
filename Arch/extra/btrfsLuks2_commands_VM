@@ -65,7 +65,7 @@ mount ${deviceName}2 /mnt/boot &&
 
 pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode &&
 genfstab -U /mnt >> /mnt/etc/fstab &&
-mkdir /mnt/root &&
+mkdir -p /mnt/root &&
 mv mykeyfile.bin /mnt/root/ &&
 arch-chroot /mnt
 }

@@ -17,7 +17,7 @@ refind_setup()
   # [[ -z "$root_device" ]] && root_device=$(findmnt -n -o SOURCE / | cut -d '[' -f 1)
   # [[ -z "$root_device" ]] && root_device=$(mount | grep ' / ' | cut -d' ' -f 1)
   root_uuid=$(lsblk -no UUID $root_device | tee -a "${logFolder}/refind.log")
-  # root_uuid=$(blkid -s UUID -o value $root_device | tee -a "${logFolder}/grub.log")
+  # root_uuid=$(blkid -s UUID -o value $root_device | tee -a "${logFolder}/refind.log")
   # root_uuid=$(blkid | grep "$root_device" | awk '{for(i=1;i<=NF;++i) if($i~/^UUID=/) print $i}' | cut -d "\"" -f 2)
   [[ -z "$home_device" ]] && home_device=$(df -P /home | cut -d '[' -f 1 | awk 'END{print $1}')
   [[ -z "$fstype" ]] && fstype=$(df -T | grep $root_device | awk '{print $2}')
@@ -51,18 +51,21 @@ refind_setup()
     fi
   fi
   dialog --title "Initramfs setup" --infobox "Setting up all initramfs with 'mkinitcpio -P." 5 70
-  mkinitcpio -P >/dev/null 2>&1  | tee -a "${logFolder}/grub.log"
+  mkinitcpio -P >/dev/null 2>&1  | tee -a "${logFolder}/refind.log"
 
-  bootType=$(findmnt -n -o FSTYPE $boot_mount)
-  if [[ -n "$bootType" ]] ; then
+  boot_separate=$(findmnt -n -o FSTYPE $boot_mount)
+  if [[ -n "$boot_separate" ]] ; then
     [[ "$fstype" == "ext4" ]] && sed -i 's/\\boot\\//g' /boot/refind_linux.conf | tee -a "${logfolder}/refind.log"
     [[ "$fstype" == "btrfs" ]] && sed -i 's/@\\boot\\//g' /boot/refind_linux.conf | tee -a "${logfolder}/refind.log"
-    [ -z "$boot_device" ] && boot_device=$(findmnt -n -o SOURCE $boot_mount | cut -d '[' -f 1 | tee -a "${logFolder}/grub.log")
+    [ -z "$boot_device" ] && boot_device=$(findmnt -n -o SOURCE $boot_mount | cut -d '[' -f 1 | tee -a "${logFolder}/refind.log")
     # boot_device=$(df -P /boot | awk 'END{print $1}')
-    boot_uuid=$(blkid -s UUID -o value $boot_device | tee -a "${logFolder}/grub.log")
-    sed -i "s/boot_uuid_number/$boot_uuid/" /boot/refind_linux.conf | tee -a "${logfolder}/refind.log"
-  else
-    sed -i "s/boot_uuid_number/$root_uuid/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
+    boot_uuid=$(blkid -s UUID -o value $boot_device | tee -a "${logFolder}/refind.log")
+    boot_fstype=$(findmnt -n -o FSTYPE $boot_mount)
+    if [[ "$boot_fstype" == "ext4" ]] ; then
+      cp /usr/share/refind/drivers_x64/ext4_x64.efi ${esp_mount}/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
+    elif [[ "$boot_fstype" == "btrfs" ]] ; then
+      cp /usr/share/refind/drivers_x64/btrfs_x64.efi ${esp_mount}/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
+    fi
   fi
 
   sed -i "s/root_uuid_number/$root_uuid/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
@@ -121,8 +124,8 @@ grub_setup()
   dialog --title "Initramfs setup" --infobox "Setting up all initramfs with 'mkinitcpio -P." 5 70
   mkinitcpio -P >/dev/null 2>&1  | tee -a "${logFolder}/grub.log"
 
-  bootType=$(findmnt -n -o FSTYPE $boot_mount)
-  if [[ -n "$bootType" ]] ; then
+  boot_separate=$(findmnt -n -o FSTYPE $boot_mount)
+  if [[ -n "$boot_separate" ]] ; then
     sed -i 's/\/boot//g' /boot/grub/custom.cfg | tee -a "${logFolder}/grub.log"
     [ -z "$boot_device" ] && boot_device=$(findmnt -n -o SOURCE $boot_mount | cut -d '[' -f 1 | tee -a "${logFolder}/grub.log")
     # boot_device=$(df -P /boot | awk 'END{print $1}')

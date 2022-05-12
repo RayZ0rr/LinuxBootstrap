@@ -13,12 +13,12 @@ refind_setup()
   rsync -avz --delete "${bootFolder}/refind/themes/refind-theme-regular_FINAL/" ${esp_mount}/EFI/refind/themes/refind-theme-regular | tee -a "${logFolder}/refind.log"
   rsync -avz --delete "${bootFolder}/refind/themes/bg.png" ${esp_mount}/EFI/refind/themes/refind-theme-regular/bg.png | tee -a "${logFolder}/refind.log"
   root_device=$(df -P /etc/fstab | cut -d '[' -f 1 | awk 'END{print $1}')
-  # root_device=$(dialog --no-cancel --inputbox "Enter the root partition device name :- ( eg : /dev/sda2, /dev/nvme0n1p3, /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
-  root_check=$(dialog --no-cancel --inputbox "Is $root_device your root partition name ? (yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+  # root_device=$(dialog --no-cancel --inputbox "Enter the root partition device name :- ( eg : /dev/sda2, /dev/nvme0n1p3, /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
+  root_check=$(dialog --no-cancel --inputbox "Is $root_device your root partition name ? (yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
   while ! [[ $root_check == "yes" || $root_check == "no" ]]; do
-    root_check=$(dialog --no-cancel --inputbox "Invalid option:-\nIs $root_device your root partition name ? (Enter yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+    root_check=$(dialog --no-cancel --inputbox "Invalid option:-\nIs $root_device your root partition name ? (Enter yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
   done
-  [[ $root_check == "no" ]] && root_device=$(dialog --no-cancel --inputbox "Enter the root partition device name :- ( eg : /dev/sda2, /dev/nvme0n1p3, /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+  [[ $root_check == "no" ]] && root_device=$(dialog --no-cancel --inputbox "Enter the root partition device name :- ( eg : /dev/sda2, /dev/nvme0n1p3, /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
   root_uuid=$(lsblk -no UUID $root_device | tee -a "${logFolder}/refind.log")
   home_device=$(df -P /home | cut -d '[' -f 1 | awk 'END{print $1}')
   fstype=$(dialog --no-cancel --inputbox "Enter the root partition filesystem type :- ( eg : ext4, btrfs)" 10 60 3>&1 1>&2 2>&3 3>&1)
@@ -32,22 +32,22 @@ refind_setup()
   if [[ "$fstype" == "ext4" ]] ; then
     cp /usr/share/refind/drivers_x64/ext4_x64.efi ${esp_mount}/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_ext4.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
-    [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_ext4_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/grub.log"
+    [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_ext4_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
   elif [[ "$fstype" == "btrfs" ]] ; then
     cp /usr/share/refind/drivers_x64/btrfs_x64.efi ${esp_mount}/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
     cp -r "${bootFolder}/refind/boot/refind_linux_btrfs.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
-    [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_btrfs_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/grub.log"
+    [[ "${fsEncrypt}" == "yes" ]] && cp -r "${bootFolder}/refind/boot/refind_linux_btrfs_luks.conf" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
   fi
   if [[ "${fsEncrypt}" == "yes" ]] ; then
     root_name=$(echo "${root_device}" | sed 's#/dev/mapper/##')
     crypt_root_device="/dev/$(lsblk -frn | grep "${root_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
     # crypt_root_device=$(blkid | grep -i "crypt*" | awk '{print $1}' | cut -d ":" -f 1)
-    crypt_root_check=$(dialog --no-cancel --inputbox "Is $crypt_root_device your root partition name used for encryption ? (yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+    crypt_root_check=$(dialog --no-cancel --inputbox "Is $crypt_root_device your root partition name used for encryption ? (yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
     while ! [[ $crypt_root_check == "yes" || $crypt_root_check == "no" ]]; do
-      crypt_root_check=$(dialog --no-cancel --inputbox "Invalid option:-\nIs $crypt_root_device your root partition name ? (Enter yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+      crypt_root_check=$(dialog --no-cancel --inputbox "Invalid option:-\nIs $crypt_root_device your root partition name ? (Enter yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
     done
-    [[ $crypt_root_check == "no" ]] && crypt_root_device=$(dialog --no-cancel --inputbox "Enter the root partition device name used for luks encryption:- ( eg : /dev/sda2, /dev/nvme0n1p3, not /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
-    crypt_root_uuid=$(blkid -s UUID -o value $crypt_root_device | tee -a "${logFolder}/grub.log")
+    [[ $crypt_root_check == "no" ]] && crypt_root_device=$(dialog --no-cancel --inputbox "Enter the root partition device name used for luks encryption:- ( eg : /dev/sda2, /dev/nvme0n1p3, not /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
+    crypt_root_uuid=$(blkid -s UUID -o value $crypt_root_device | tee -a "${logFolder}/refind.log")
     sed -i "s/luks_uuid_number/$crypt_root_uuid/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
     sed -i 's/^HOOK.*/&\n&/' /etc/mkinitcpio.conf | tee -a "${logFolder}/refind.log"
     sed -i '0,/^HOOK.*/s/^HOOK/#HOOK/' /etc/mkinitcpio.conf | tee -a "${logFolder}/refind.log"
@@ -56,36 +56,42 @@ refind_setup()
     if [[ "$fstype" == "ext4" ]] ; then
       home_name=$(echo "${home_device}" | sed 's#/dev/mapper/##')
       crypt_home_device="/dev/$(lsblk -frn | grep "${home_name}" -B1 | head -1 | awk '{print $1}' | cut -d '-' -f2)"
-      crypt_home_check=$(dialog --no-cancel --inputbox "Is $crypt_home_device your home partition name used for encryption ? (yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+      crypt_home_check=$(dialog --no-cancel --inputbox "Is $crypt_home_device your home partition name used for encryption ? (yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
       while ! [[ $crypt_home_check == "yes" || $crypt_home_check == "no" ]]; do
-	crypt_home_check=$(dialog --no-cancel --inputbox "Invalid option:-\nIs $crypt_home_device your home partition name ? (Enter yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+	crypt_home_check=$(dialog --no-cancel --inputbox "Invalid option:-\nIs $crypt_home_device your home partition name ? (Enter yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
       done
-      [[ $crypt_home_check == "no" ]] && crypt_home_device=$(dialog --no-cancel --inputbox "Enter the root partition device name used for luks encryption:- ( eg : /dev/sda2, /dev/nvme0n1p3, not /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+      [[ $crypt_home_check == "no" ]] && crypt_home_device=$(dialog --no-cancel --inputbox "Enter the root partition device name used for luks encryption:- ( eg : /dev/sda2, /dev/nvme0n1p3, not /dev/mapper/root )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
       crypt_home_uuid=$(blkid -s UUID -o value $crypt_home_device | tee -a "${logFolder}/refind.log")
       cp "${bootFolder}"/crypt/crypttab /etc/crypttab
       # sed -i "/home_luks_uuid_number/ s/^Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/refind.log"
       sed -i "s/home_luks_uuid_number/$crypt_home_uuid/" /etc/crypttab | tee -a "${logFolder}/refind.log"
-      sed -i "s/Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/grub.log"
+      sed -i "s/Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/refind.log"
     fi
   fi
   dialog --title "Initramfs setup" --infobox "Setting up all initramfs with 'mkinitcpio -P." 5 70
   mkinitcpio -P >/dev/null 2>&1  | tee -a "${logFolder}/refind.log"
 
-  bootType=$(dialog --no-cancel --inputbox "Is boot on separate partition :- ( yes or no )?" 10 60 3>&1 1>&2 2>&3 3>&1)
-  while ! [[ $bootType == "yes" || $bootType == "no" ]]; do
-    bootType=$(dialog --no-cancel --inputbox "Invalid option:-\nPlease type 'yes' or 'no'" 10 60 3>&1 1>&2 2>&3 3>&1)
+  boot_separate=$(dialog --no-cancel --inputbox "Is boot on separate partition :- ( yes or no )?" 10 60 3>&1 1>&2 2>&3 3>&1)
+  while ! [[ $boot_separate == "yes" || $boot_separate == "no" ]]; do
+    boot_separate=$(dialog --no-cancel --inputbox "Invalid option:-\nPlease type 'yes' or 'no'" 10 60 3>&1 1>&2 2>&3 3>&1)
   done
-  if [[ "$bootType" == "yes" ]] ; then
+  if [[ "$boot_separate" == "yes" ]] ; then
     [[ "$fstype" == "ext4" ]] && sed -i 's/\\boot\\//g' /boot/refind_linux.conf | tee -a "${logfolder}/refind.log"
     [[ "$fstype" == "btrfs" ]] && sed -i 's/@\\boot\\//g' /boot/refind_linux.conf | tee -a "${logfolder}/refind.log"
     boot_mount=$(dialog --no-cancel --inputbox "Enter the mount point for boot partition (eg : /boot , /boot/efi)" 10 60 3>&1 1>&2 2>&3 3>&1)
     boot_device=$(findmnt -n -o SOURCE $boot_mount | tee -a "${logfolder}/refind.log")
-    # boot_device=$(dialog --no-cancel --inputbox "Enter the boot partition device name:- ( eg : /dev/sda2, /dev/nvme0n1p3 )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/grub.log")
+    # boot_device=$(dialog --no-cancel --inputbox "Enter the boot partition device name:- ( eg : /dev/sda2, /dev/nvme0n1p3 )" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
     boot_uuid=$(blkid -s UUID -o value $boot_device | tee -a "${logfolder}/refind.log")
-    sed -i "s/boot_uuid_number/$boot_uuid/" /boot/refind_linux.conf | tee -a "${logfolder}/refind.log"
-    # sed -i "s/=root.*/=root $boot_uuid/" /boot/grub/custom.cfg | tee -a "${logFolder}/grub.log"
-  else
-    sed -i "s/boot_uuid_number/$root_uuid/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
+    boot_fstype=$(findmnt -n -o FSTYPE $boot_mount)
+    boot_fstype_check=$(dialog --no-cancel --inputbox "Is $boot_fstype your boot partition filetype? (yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
+    while ! [[ $boot_fstype_check == "yes" || $boot_fstype_check == "no" ]]; do
+      boot_fstype_check=$(dialog --no-cancel --inputbox "Invalid option:-\nIs $boot_fstype your boot partition filetype? (Enter yes or no)" 10 60 3>&1 1>&2 2>&3 3>&1 | tee -a "${logFolder}/refind.log")
+    done
+    if [[ "$boot_fstype" == "ext4" ]] ; then
+      cp /usr/share/refind/drivers_x64/ext4_x64.efi ${esp_mount}/EFI/refind/drivers_x64/ext4_x64.efi | tee -a "${logFolder}/refind.log"
+    elif [[ "$boot_fstype" == "btrfs" ]] ; then
+      cp /usr/share/refind/drivers_x64/btrfs_x64.efi ${esp_mount}/EFI/refind/drivers_x64/btrfs_x64.efi | tee -a "${logFolder}/refind.log"
+    fi
   fi
 
   sed -i "s/root_uuid_number/$root_uuid/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
@@ -163,11 +169,11 @@ grub_setup()
   dialog --title "Initramfs setup" --infobox "Setting up all initramfs with 'mkinitcpio -P." 5 70
   mkinitcpio -P >/dev/null 2>&1  | tee -a "${logFolder}/grub.log"
 
-  bootType=$(dialog --no-cancel --inputbox "Is boot on separate partition :- ( yes or no )?" 10 60 3>&1 1>&2 2>&3 3>&1)
-  while ! [[ $bootType == "yes" || $bootType == "no" ]]; do
-    bootType=$(dialog --no-cancel --inputbox "Invalid option:-\nPlease type 'yes' or 'no'" 10 60 3>&1 1>&2 2>&3 3>&1)
+  boot_separate=$(dialog --no-cancel --inputbox "Is boot on separate partition :- ( yes or no )?" 10 60 3>&1 1>&2 2>&3 3>&1)
+  while ! [[ $boot_separate == "yes" || $boot_separate == "no" ]]; do
+    boot_separate=$(dialog --no-cancel --inputbox "Invalid option:-\nPlease type 'yes' or 'no'" 10 60 3>&1 1>&2 2>&3 3>&1)
   done
-  if [[ "$bootType" == "yes" ]] ; then
+  if [[ "$boot_separate" == "yes" ]] ; then
     sed -i 's/\/boot//g' /boot/grub/custom.cfg | tee -a "${logFolder}/grub.log"
     boot_mount=$(dialog --no-cancel --inputbox "Enter the mount point for boot partition (eg : /boot , /boot/efi)" 10 60 3>&1 1>&2 2>&3 3>&1)
     boot_device=$(findmnt -n -o SOURCE $boot_mount | tee -a "${logFolder}/grub.log")
