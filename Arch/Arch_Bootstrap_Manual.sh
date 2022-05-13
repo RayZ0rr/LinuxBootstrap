@@ -43,7 +43,7 @@ doSucklessSetup="yes"
 [ -z "$aurhelper" ] && aurhelper="yay"
 [ -z "$repobranch" ] && repobranch="main"
 [ -z "$fstype" ] && fstype="btrfs"
-[ -z "$bootLoader" ] && bootLoader="grub"
+[ -z "$bootLoader" ] && bootLoader="refind"
 # -----------------------------------------------------
 # User details
 # -----------------------------------------------------

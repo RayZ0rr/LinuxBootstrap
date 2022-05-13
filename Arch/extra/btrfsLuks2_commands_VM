@@ -4,13 +4,20 @@
 # chmod +x btrfsLuks2_commands_VM
 
 deviceName="/dev/vda"
+dev1="${deviceName}1"
+dev2="${deviceName}2"
+dev3="${deviceName}3"
+dev4="${deviceName}4"
+deviceMapper="/dev/mapper"
+devMapper1="${deviceMapper}/Cbtrfs"
+devMapper2="${deviceMapper}/Chome"
 partition_end=100%
 
 SingleCommand() {
-  mkfs.fat -F 32 -n part_efi ${deviceName}1 && \
-  mkfs.ext4 -L part_boot ${deviceName}2 && \
-  mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs && \
-  mount /dev/mapper/Cbtrfs /mnt && \
+  mkfs.fat -F 32 -n part_efi ${dev1} && \
+  mkfs.ext4 -L part_boot ${dev2} && \
+  mkfs.btrfs -L part_btrfs ${devMapper1} && \
+  mount ${devMapper1} /mnt && \
   btrfs sub cr /mnt/@ && \
   btrfs sub cr /mnt/@home && \
   btrfs sub cr /mnt/@var_log && \
@@ -18,51 +25,54 @@ SingleCommand() {
   btrfs sub cr /mnt/@snapshots && \
   btrfs sub cr /mnt/@swap && \
   umount /mnt && \
-  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@ /dev/mapper/Cbtrfs /mnt && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@ ${devMapper1} /mnt && \
   mkdir -p /mnt/{boot,efi,home,var/log,var/cache,.snapshots,root/btrfs-top-level,swap_part} && \
-  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home /dev/mapper/Cbtrfs /mnt/home && \
-  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log /dev/mapper/Cbtrfs /mnt/var/log && \
-  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache /dev/mapper/Cbtrfs /mnt/var/cache && \
-  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots /dev/mapper/Cbtrfs /mnt/.snapshots && \
-  mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part && \
-  mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home ${devMapper1} /mnt/home && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log ${devMapper1} /mnt/var/log && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache ${devMapper1} /mnt/var/cache && \
+  mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots ${devMapper1} /mnt/.snapshots && \
+  mount -o defaults,ssd,subvol=@swap ${devMapper1} /mnt/swap_part && \
+  mount -o noauto,noatime,defaults,ssd,subvol=/ ${devMapper1} /mnt/root/btrfs-top-level && \
   mount ${deviceName}1 /mnt/efi && \
   mount ${deviceName}2 /mnt/boot && \
   pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode && \
   genfstab -U /mnt >> /mnt/etc/fstab && \
-  mkdir /mnt/root && \
+  mkdir -p /mnt/root && \
   mv mykeyfile.bin /mnt/root/
-}
-
-Key_cmnds() {
-
-dd bs=512 count=4 if=/dev/random of=mykeyfile.bin iflag=fullblock &&
-chmod 600 mykeyfile.bin
-cryptsetup luksAddKey ${deviceName} mykeyfile.bin
-cryptsetup open ${deviceName}3 Cbtrfs --key-file mykeyfile.bin
-
 }
 
 Partition_cmnds() {
 
 parted "${deviceName}" mklabel gpt &&
 parted "${deviceName}" mkpart "part_efi" fat32 1MiB 501MiB &&
+parted "${deviceName}" set 1 esp on &&
 parted "${deviceName}" mkpart "part_boot" ext4 501MiB 1001MiB &&
-parted "${deviceName}" mkpart "part_btrfs" ext4 1001MiB ${partition_end}
+parted "${deviceName}" mkpart "part_btrfs" btrfs 1001MiB ${partition_end}
 
 }
 
+Crypt_cmnds() {
+
+cryptsetup luksFormat ${dev3} &&
+dd bs=512 count=4 if=/dev/random of=mykeyfile.bin iflag=fullblock &&
+chmod 600 mykeyfile.bin &&
+cryptsetup luksAddKey ${dev3} mykeyfile.bin &&
+cryptsetup open ${dev3} Cbtrfs --key-file mykeyfile.bin
+
+}
+
+
 Filesystem_cmnds() {
 
-mkfs.fat -F 32 -n part_efi ${deviceName}1 &&
-mkfs.ext4 -L part_boot ${deviceName}2 &&
-mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs
+mkfs.fat -F 32 -n label_efi ${deviceName}1 &&
+mkfs.ext4 -L label_boot ${deviceName}2 &&
+mkfs.btrfs -L label_btrfs ${devMapper1}
 
 }
 
 Mount_cmnds() {
 
-mount /dev/mapper/Cbtrfs /mnt &&
+mount ${devMapper1} /mnt &&
 btrfs sub cr /mnt/@ &&
 btrfs sub cr /mnt/@home &&
 btrfs sub cr /mnt/@var_log &&
@@ -71,14 +81,14 @@ btrfs sub cr /mnt/@snapshots &&
 btrfs sub cr /mnt/@swap &&
 umount /mnt &&
 
-mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@ /dev/mapper/Cbtrfs /mnt &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@ ${devMapper1} /mnt &&
 mkdir -p /mnt/{boot,efi,home,var/log,var/cache,.snapshots,root/btrfs-top-level,swap_part} &&
-mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home /dev/mapper/Cbtrfs /mnt/home &&
-mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log /dev/mapper/Cbtrfs /mnt/var/log &&
-mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache /dev/mapper/Cbtrfs /mnt/var/cache &&
-mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots /dev/mapper/Cbtrfs /mnt/.snapshots &&
-mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part &&
-mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@home ${devMapper1} /mnt/home &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_log ${devMapper1} /mnt/var/log &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@var_cache ${devMapper1} /mnt/var/cache &&
+mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvol=@snapshots ${devMapper1} /mnt/.snapshots &&
+mount -o defaults,ssd,subvol=@swap ${devMapper1} /mnt/swap_part &&
+mount -o noauto,noatime,defaults,ssd,subvol=/ ${devMapper1} /mnt/root/btrfs-top-level &&
 
 mount ${deviceName}1 /mnt/efi &&
 mount ${deviceName}2 /mnt/boot
@@ -89,7 +99,7 @@ Install_cmnds() {
 
 pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode &&
 genfstab -U /mnt >> /mnt/etc/fstab &&
-mkdir /mnt/root &&
+mkdir -p /mnt/root &&
 mv mykeyfile.bin /mnt/root/
 
 }
@@ -98,10 +108,10 @@ Custom_cmnds() {
 
 for arg in "${@}"
 do
-  if [[ "${arg}" == "key" ]] ; then
-    Key_cmnds
-  elif [[ "${arg}" == "partition" ]] ; then
+  if [[ "${arg}" == "partition" ]] ; then
     Partition_cmnds
+  elif [[ "${arg}" == "crypt" ]] ; then
+    Crypt_cmnds
   elif [[ "${arg}" == "filesystem" ]] ; then
     Filesystem_cmnds
   elif [[ "${arg}" == "mount" ]] ; then
@@ -115,11 +125,11 @@ done
 }
 
 case "${1}" in
-  "key")
-    Key_cmnds
-    exit 0 ;;
   "partition")
     Partition_cmnds
+    exit 0 ;;
+  "crypt")
+    Crypt_cmnds
     exit 0 ;;
   "filesystem")
     Filesystem_cmnds
@@ -131,8 +141,8 @@ case "${1}" in
     Install_cmnds
     exit 0 ;;
   "all")
-    Key_cmnds &&
     Partition_cmnds &&
+    Crypt_cmnds &&
     Filesystem_cmnds &&
     Mount_cmnds &&
     Install_cmnds
@@ -141,6 +151,6 @@ case "${1}" in
     Custom_cmnds "${@: 2}"
     exit 0 ;;
   *)
-    printf "\nNeeds arguments. Available options are 'all,custom,partition,filesystem,mount,install'.\n\n"
+    printf "\nNeeds arguments. Available options are 'all,custom,partition,crypt,filesystem,mount,install'.\n\n"
     exit 1 ;;
 esac
