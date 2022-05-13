@@ -4,9 +4,9 @@
 # chmod +x btrfsLuks2_commands_VM
 
 deviceName="/dev/vda"
+partition_end=100%
 
 SingleCommand() {
-cryptsetup open ${deviceName}3 Cbtrfs --key-file mykeyfile.bin && \
   mkfs.fat -F 32 -n part_efi ${deviceName}1 && \
   mkfs.ext4 -L part_boot ${deviceName}2 && \
   mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs && \
@@ -31,19 +31,38 @@ cryptsetup open ${deviceName}3 Cbtrfs --key-file mykeyfile.bin && \
   pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode && \
   genfstab -U /mnt >> /mnt/etc/fstab && \
   mkdir /mnt/root && \
-  mv mykeyfile.bin /mnt/root/ && \
-  arch-chroot /mnt
+  mv mykeyfile.bin /mnt/root/
 }
 
-MultiCommands() {
-cryptsetup open ${deviceName}3 Cbtrfs --key-file mykeyfile.bin &&
+Key_cmnds() {
+
+dd bs=512 count=4 if=/dev/random of=mykeyfile.bin iflag=fullblock &&
+chmod 600 mykeyfile.bin
+cryptsetup luksAddKey ${deviceName} mykeyfile.bin
+cryptsetup open ${deviceName}3 Cbtrfs --key-file mykeyfile.bin
+
+}
+
+Partition_cmnds() {
+
+parted "${deviceName}" mklabel gpt &&
+parted "${deviceName}" mkpart "part_efi" fat32 1MiB 501MiB &&
+parted "${deviceName}" mkpart "part_boot" ext4 501MiB 1001MiB &&
+parted "${deviceName}" mkpart "part_btrfs" ext4 1001MiB ${partition_end}
+
+}
+
+Filesystem_cmnds() {
 
 mkfs.fat -F 32 -n part_efi ${deviceName}1 &&
 mkfs.ext4 -L part_boot ${deviceName}2 &&
+mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs
 
-mkfs.btrfs -L part_btrfs /dev/mapper/Cbtrfs &&
+}
+
+Mount_cmnds() {
+
 mount /dev/mapper/Cbtrfs /mnt &&
-
 btrfs sub cr /mnt/@ &&
 btrfs sub cr /mnt/@home &&
 btrfs sub cr /mnt/@var_log &&
@@ -62,13 +81,66 @@ mount -o defaults,ssd,subvol=@swap /dev/mapper/Cbtrfs /mnt/swap_part &&
 mount -o noauto,noatime,defaults,ssd,subvol=/ /dev/mapper/Cbtrfs /mnt/root/btrfs-top-level &&
 
 mount ${deviceName}1 /mnt/efi &&
-mount ${deviceName}2 /mnt/boot &&
+mount ${deviceName}2 /mnt/boot
+
+}
+
+Install_cmnds() {
 
 pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode &&
 genfstab -U /mnt >> /mnt/etc/fstab &&
-mkdir -p /mnt/root &&
-mv mykeyfile.bin /mnt/root/ &&
-arch-chroot /mnt
+mkdir /mnt/root &&
+mv mykeyfile.bin /mnt/root/
+
 }
 
-MultiCommands
+Custom_cmnds() {
+
+for arg in "${@}"
+do
+  if [[ "${arg}" == "key" ]] ; then
+    Key_cmnds
+  elif [[ "${arg}" == "partition" ]] ; then
+    Partition_cmnds
+  elif [[ "${arg}" == "filesystem" ]] ; then
+    Filesystem_cmnds
+  elif [[ "${arg}" == "mount" ]] ; then
+    Mount_cmnds
+  elif [[ "${arg}" == "install" ]] ; then
+    Install_cmnds
+    exit 0
+  fi
+done
+
+}
+
+case "${1}" in
+  "key")
+    Key_cmnds
+    exit 0 ;;
+  "partition")
+    Partition_cmnds
+    exit 0 ;;
+  "filesystem")
+    Filesystem_cmnds
+    exit 0 ;;
+  "mount")
+    Mount_cmnds
+    exit 0 ;;
+  "install")
+    Install_cmnds
+    exit 0 ;;
+  "all")
+    Key_cmnds &&
+    Partition_cmnds &&
+    Filesystem_cmnds &&
+    Mount_cmnds &&
+    Install_cmnds
+    exit 0 ;;
+  "custom")
+    Custom_cmnds "${@: 2}"
+    exit 0 ;;
+  *)
+    printf "\nNeeds arguments. Available options are 'all,custom,partition,filesystem,mount,install'.\n\n"
+    exit 1 ;;
+esac
