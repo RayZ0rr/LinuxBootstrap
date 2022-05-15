@@ -246,6 +246,11 @@ cd tmp/mySetup
 git clone https://github.com/RayZ0rr/LinuxBootstrap
 cd LinuxBootstrap/Arch
 ```
+or in one line
+```
+mkdir tmp/mySetup && cd tmp/mySetup && git clone https://github.com/RayZ0rr/LinuxBootstrap && cd LinuxBootstrap/Arch
+
+```
 Optionally, edit the bootstrap script that will be used. Especially, the variables starting from _line 31_.
 ```
 vim ./Arch_Bootstrap_[Auto|Manual].sh
