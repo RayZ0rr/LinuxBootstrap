@@ -51,8 +51,6 @@ refind_setup()
       sed -i "s/Chome/$home_name/" /etc/crypttab | tee -a "${logFolder}/refind.log"
     fi
   fi
-  dialog --title "Initramfs setup" --infobox "Setting up all initramfs with 'mkinitcpio -P." 5 70
-  mkinitcpio -P >/dev/null 2>&1  | tee -a "${logFolder}/refind.log"
 
   boot_separate=$(findmnt -n -o FSTYPE $boot_mount)
   if [[ -n "$boot_separate" ]] ; then
@@ -71,6 +69,11 @@ refind_setup()
 
   sed -i "s/root_uuid_number/$root_uuid/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
   [[ "${fsEncrypt}" == "yes" ]] && sed -i "s/Cbtrfs/$root_name/" /boot/refind_linux.conf | tee -a "${logFolder}/refind.log"
+
+  rsync -avz --delete "${bootFolder}/refind/themes/refind-theme-regular_FINAL/icons/256-96/os_arch.png" ${boot_mount}/vmlinuz-linux-lts | tee -a "${logFolder}/refind.log"
+
+  dialog --title "Initramfs setup" --infobox "Setting up all initramfs with 'mkinitcpio -P." 5 70
+  mkinitcpio -P >/dev/null 2>&1  | tee -a "${logFolder}/refind.log"
 
   cd "$current_path"
 }
