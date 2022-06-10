@@ -3,15 +3,26 @@
 # curl -O -L https://raw.githubusercontent.com/RayZ0rr/LinuxBootstrap/main/Arch/extra/btrfsLuks2_commands_VM
 # chmod +x btrfsLuks2_commands_VM
 
+# DEVICE NAMES
+# ------------------------------------------------
 deviceName="/dev/vda"
 dev1="${deviceName}1"
 dev2="${deviceName}2"
 dev3="${deviceName}3"
 dev4="${deviceName}4"
+# ENCRYPTED DEVICE NAMES
+# ------------------------------------------------
 deviceMapper="/dev/mapper"
 devMapper1="${deviceMapper}/Cbtrfs"
 devMapper2="${deviceMapper}/Chome"
-partition_end=100%
+# PARTITION SIZES
+# ------------------------------------------------
+part_efi_begin="0"
+part_boot_begin="0"
+part_root_begin="0"
+part_efi_end="+550MiB"
+part_boot_end="+500MiB"
+part_root_end="0"
 
 SingleCommand() {
   mkfs.fat -F 32 -n part_efi ${dev1} && \
@@ -43,11 +54,23 @@ SingleCommand() {
 
 Partition_cmnds() {
 
-parted "${deviceName}" mklabel gpt &&
-parted "${deviceName}" mkpart "part_efi" fat32 1MiB 501MiB &&
-parted "${deviceName}" set 1 esp on &&
-parted "${deviceName}" mkpart "part_boot" ext4 501MiB 1001MiB &&
-parted "${deviceName}" mkpart "part_btrfs" btrfs 1001MiB ${partition_end}
+# Clear all existing partitions and table
+sgdisk --zap-all "${deviceName}" &&
+sgdisk --clear "${deviceName}" &&
+sgdisk --align-end "${deviceName}" &&
+
+# Value 0 means next available space or next available part number
+sgdisk -n 0:${part_efi_begin}:${part_efi_end} -t 0:ef00 -c 0:part_efi "${deviceName}" &&
+sgdisk -n 0:${part_boot_begin}:${part_boot_end} -t 0:8300 -c 0:part_boot "${deviceName}" &&
+sgdisk -n 0:${part_root_begin}:${part_root_end} -t 0:8300 -c 0:part_root "${deviceName}" &&
+# sgdisk -n 1:1:+${part_efi_end} -t 0:ef00 -c 0:part_efi "${deviceName}" &&
+# sgdisk -n 2:0:+${part_boot_end} -t 0:ea00 -c 0:part_boot "${deviceName}" &&
+# sgdisk -n 3:0:+${part_root_end} -t 0:8300 -c 0:part_root "${deviceName}" &&
+
+# No automount by systemD
+sgdisk -A 1:set:63 "${deviceName}" &&
+sgdisk -A 2:set:63 "${deviceName}" &&
+sgdisk -A 3:set:63 "${deviceName}"
 
 }
 
