@@ -5,12 +5,17 @@ refind_setup()
   current_path="$PWD"
   cd "/home/${myName}"
   esp_mount=$(dialog --no-cancel --inputbox "Enter the mount point for EFI system partition (esp) [eg : /boot/efi , /efi]" 10 60 3>&1 1>&2 2>&3 3>&1)
+  refind_path="${esp_mount}/EFI/refind"
   dialog --title "Bootloader setup" --infobox "Installing rEFInd which is required to boot the system." 5 70
   refind-install >/dev/null 2>&1 | tee -a "${logFolder}/refind.log"
   dialog --title "Bootloader setup" --infobox "Setting up rEFInd which is required to boot the system." 5 70
   cp ${esp_mount}/EFI/refind/refind.conf ${esp_mount}/EFI/refind/refind_sample.conf | tee -a "${logFolder}/refind.log"
+  # cp -r "${bootFolder}/refind/themes/refind.conf" ${esp_mount}/EFI/refind | tee -a "${logFolder}/refind.log"
   ! [[ -d "${esp_mount}/EFI/refind/themes" ]] && mkdir -p ${esp_mount}/EFI/refind/themes
-  cp -r "${bootFolder}/refind/themes/refind.conf" ${esp_mount}/EFI/refind | tee -a "${logFolder}/refind.log"
+  grep -qxF 'include themes/refind-theme-regular/theme.conf' ${refind_path}/refind.conf || echo 'include themes/refind-theme-regular/theme.conf' >> ${refind_path}/refind.conf
+  grep -qxF '#BACKGROUND IMAGE' ${refind_path}/refind.conf || echo '#BACKGROUND IMAGE' >> ${refind_path}/refind.conf
+  grep -qxF 'banner themes/refind-theme-regular/bg.png' ${refind_path}/refind.conf || echo 'banner themes/refind-theme-regular/bg.png' >> ${refind_path}/refind.conf
+  grep -qxF 'banner_scale fillscreen' ${refind_path}/refind.conf || echo 'banner_scale fillscreen' >> ${refind_path}/refind.conf
   rsync -avz --delete "${bootFolder}/refind/themes/refind-theme-regular_FINAL/" ${esp_mount}/EFI/refind/themes/refind-theme-regular | tee -a "${logFolder}/refind.log"
   rsync -avz --delete "${bootFolder}/refind/themes/bg.png" ${esp_mount}/EFI/refind/themes/refind-theme-regular/bg.png | tee -a "${logFolder}/refind.log"
   root_device=$(df -P /etc/fstab | cut -d '[' -f 1 | awk 'END{print $1}')
