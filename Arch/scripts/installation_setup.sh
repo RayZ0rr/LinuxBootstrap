@@ -86,5 +86,5 @@ for x in curl git wget python-pip ca-certificates rsync base-devel python-wheel 
   else
     dialog --title "Essential package installation" --infobox "Installing \`$x\` which is required to install and configure other programs." 5 70
   fi
-  installpkg "$x" | tee -a "${logFolder}/essential_packages.log"
+  installpkg "$x" >/dev/null 2>&1 | tee -a "${logFolder}/essential_packages.log"
 done
