@@ -32,9 +32,9 @@ sgdisk --clear "${deviceName}" &&
 sgdisk --align-end "${deviceName}" &&
 
 # Value 0 means next available space or next available part number
-sgdisk -n 0:${part_efi_begin}:${part_efi_end} -t 0:ef00 -c 0:part_efi "${deviceName}" &&
-sgdisk -n 0:${part_boot_begin}:${part_boot_end} -t 0:8300 -c 0:part_boot "${deviceName}" &&
-sgdisk -n 0:${part_root_begin}:${part_root_end} -t 0:8300 -c 0:part_root "${deviceName}" &&
+sgdisk -n 0:${part_efi_begin}:${part_efi_end} -t 1:ef00 -c 1:part_efi "${deviceName}" &&
+sgdisk -n 0:${part_boot_begin}:${part_boot_end} -t 2:8300 -c 2:part_boot "${deviceName}" &&
+sgdisk -n 0:${part_root_begin}:${part_root_end} -t 3:8300 -c 3:part_root "${deviceName}" &&
 
 # No automount by systemD
 sgdisk -A 1:set:63 "${deviceName}" &&
@@ -56,8 +56,8 @@ cryptsetup open ${dev3} Cbtrfs --key-file mykeyfile.bin
 
 Filesystem_cmnds() {
 
-mkfs.fat -F 32 -n label_efi ${deviceName}1 &&
-mkfs.ext4 -L label_boot ${deviceName}2 &&
+mkfs.fat -F 32 -n label_efi ${dev1} &&
+mkfs.ext4 -L label_boot ${dev2} &&
 mkfs.btrfs -L label_btrfs ${devMapper1}
 
 }
@@ -82,17 +82,19 @@ mount -o noatime,discard=async,autodefrag,space_cache=v2,ssd,compress=zstd,subvo
 mount -o defaults,ssd,subvol=@swap ${devMapper1} /mnt/swap_part &&
 mount -o noauto,noatime,defaults,ssd,subvol=/ ${devMapper1} /mnt/root/btrfs-top-level &&
 
-mount ${deviceName}1 /mnt/efi &&
-mount ${deviceName}2 /mnt/boot
+mount ${dev1} /mnt/efi &&
+mount ${dev2} /mnt/boot
 
 }
 
 Install_cmnds() {
 
-pacstrap /mnt base linux-lts linux-firmware git vim refind nvidia-lts intel-ucode &&
+pacstrap /mnt base linux-firmware git vim &&
 genfstab -U /mnt >> /mnt/etc/fstab &&
 mkdir -p /mnt/root &&
 mv mykeyfile.bin /mnt/root/
+printf "\nNow using 'pacstrap' install on '/mnt' :-\n1) Kernel(linux,linux-lts,etc)\n2) Bootloader(rEFInd or grub)\n3) Microcode(intel-ucode or amd-ucode)\n4) Graphics driver(nvidia,nvdia-lts,etc)\n"
+printf "\nEg :-\npacstrap /mnt linux-lts refind intel-ucode nvidia-lts\n"
 
 }
 
