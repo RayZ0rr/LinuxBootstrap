@@ -28,9 +28,9 @@ bootstrapFolder=$(dirname $(readlink -f $0))
 logFolder="/tmp/bootstrapLogs"
 alias la="ls -al"
 
-doDotfilesSetup="yes"
-doNvimSetup="yes"
-doSucklessSetup="yes"
+doDotfilesSetup="no"
+doNvimSetup="no"
+doSucklessSetup="no"
 [ -z "$dotfilesrepo" ] && dotfilesrepo="https://github.com/RayZ0rr/dotfiles.git"
 [ -z "$bootrepo" ] && bootrepo="https://github.com/RayZ0rr/LinuxBoot.git"
 [ -z "$nvimrepo" ] && nvimrepo="https://github.com/RayZ0rr/myNeovim.git"
