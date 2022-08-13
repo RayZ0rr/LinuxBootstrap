@@ -38,7 +38,5 @@ setup_dotfiles_config(){
   sudo -u "$myName" ln -sf "${myDots}/HOME/.ignore" .ignore > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
   sudo -u "$myName" ln -sf "${myDots}/HOME/.tmux.conf" .tmux.conf > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
   sudo -u "$myName" ln -sf "${myDots}/HOME/.Xresources" .Xresources > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
-  printf "[General]\nNumlock=on\n[Theme]\nCurrent=astronaut" >> /etc/sddm.conf | tee -a "${logFolder}/setupLocalConfig.log"
-  cp "${bootstrapFolder}"/scripts/firstStart.sh ./firstStart.sh
   cd "$current_path"
 }

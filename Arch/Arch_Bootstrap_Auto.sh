@@ -104,13 +104,13 @@ preinstallmsg() { \
   }
 
 newperms() { # Set special sudoers settings for install (or after).
-  sed -i "/#Arch_Boostrap_Auto(ABA) Script settings/d" /etc/sudoers
+  sed -i "/#ABA/d" /etc/sudoers
   echo "$* #ABA" >> /etc/sudoers ;}
 
 sudo_perms()
 {
   echo "#Arch_Boostrap_Auto(ABA) Script settings" >> /etc/sudoers.d/"$myName"
-  echo "%wheel ALL=(AL:ALLL) ALL    # ABA" >> /etc/sudoers.d/"$myName"
+  echo "%wheel ALL=(ALL:ALL) ALL    # ABA" >> /etc/sudoers.d/"$myName"
   echo "%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syu --noconfirm,/usr/bin/pacman -Syyu,/usr/bin/packer -Syu,/usr/bin/packer -Syyu,/usr/bin/systemctl restart NetworkManager,/usr/bin/rc-service NetworkManager restart,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/paru,/usr/bin/pacman -Syyuw --noconfirm   #ABA" >> /etc/sudoers.d/"$myName"
 }
 
@@ -119,6 +119,7 @@ finalize(){ \
   dialog --title "All done!" --msgbox "Congrats! Provided there were no hidden errors, the 'Arch_Boostrap_Auto' script completed successfully and all the programs and configuration files should be in place.\\nUnless manually edited or provided through -u and -k flags, the default username and password are luke and ermanno\\nTo run the new graphical environment, log out and log back in as your new user, then run the command \"startx\" to start the graphical environment (it will start automatically in tty1) or a display/login manager ( eg: lightdm, sddm )." 12 80
   dialog --colors --title "Extra Note" --msgbox "logs of various commands output are placed in \"${logFolder} and ~/bootstrapLogs after successful completion\".\\n" 10 60
   sudo -u "$myName" cp -r "${logFolder}" /home/${myName}/bootstrapLogs
+  cp "${bootstrapFolder}"/scripts/firstStart.sh ./firstStart.sh
   }
 
 ### THE ACTUAL SCRIPT ###
@@ -211,6 +212,8 @@ EndSection' > /etc/X11/xorg.conf.d/30-touchpad.conf
 newperms "#%wheel ALL=(ALL) ALL"
 
 sudo_perms
+
+login_manager
 
 # Last message! Install complete!
 finalize

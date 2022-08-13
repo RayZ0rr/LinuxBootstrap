@@ -54,3 +54,12 @@ Include = /etc/pacman.d/mirrorlist-arch" >> /etc/pacman.conf
       pacman-key --populate archlinux
       ;;
   esac ;}
+
+systembeepoff() { dialog --infobox "Getting rid of that annoying error beep sound..." 10 50
+	rmmod pcspkr
+	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
+
+login_manager()
+{
+  printf "[General]\nNumlock=on\n[Theme]\nCurrent=astronaut" >> /etc/sddm.conf | tee -a "${logFolder}/setupLocalConfig.log"
+}

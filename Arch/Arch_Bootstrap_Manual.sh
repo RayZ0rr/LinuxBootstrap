@@ -86,7 +86,7 @@ preinstallmsg() { \
   }
 
 newperms() { # Set special sudoers settings for install (or after).
-  sed -i "/#Arch_Boostrap_Manual(ABM) Script settings/d" /etc/sudoers
+  sed -i "/#ABM/d" /etc/sudoers
   echo "$* #ABM" >> /etc/sudoers ;}
 
 sudo_perms()
@@ -101,6 +101,7 @@ finalize(){ \
   dialog --title "All done!" --msgbox "Congrats! Provided there were no hidden errors, the 'Arch_Boostrap_Manual' script completed successfully and all the programs and configuration files should be in place.\\nUnless manually edited or provided through -u and -k flags, the default username and password are luke and ermanno\\nTo run the new graphical environment, log out and log back in as your new user, then run the command \"startx\" to start the graphical environment (it will start automatically in tty1) or a display/login manager ( eg: lightdm, sddm )." 12 80
   dialog --colors --title "Extra Note" --msgbox "logs of various commands output are placed in \"${logFolder} and ~/bootstrapLogs after successful completion\".\\n" 10 60
   sudo -u "$myName" cp -r "${logFolder}" /home/${myName}/bootstrapLogs
+  cp "${bootstrapFolder}"/scripts/firstStart.sh ./firstStart.sh
   }
 
 getuserandpass() {
@@ -216,6 +217,8 @@ EndSection' > /etc/X11/xorg.conf.d/30-touchpad.conf
 newperms "#%wheel ALL=(ALL) ALL"
 
 sudo_perms
+
+login_manager
 
 # Last message! Install complete!
 finalize
