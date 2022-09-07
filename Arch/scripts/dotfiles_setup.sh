@@ -36,7 +36,7 @@ setup_dotfiles_config(){
   sudo -u "$myName" touch .zshrc > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
   sudo -u "$myName" ln -sf "${myDots}/HOME/.profile" .profile > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
   sudo -u "$myName" ln -sf "${myDots}/HOME/.ignore" .ignore > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
-  sudo -u "$myName" ln -sf "${myDots}/HOME/.tmux.conf" .tmux.conf > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
   sudo -u "$myName" ln -sf "${myDots}/HOME/.Xresources" .Xresources > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
+  sudo -u "$myName" stow -v --no-folding -t ".Xresources.d" -d "${myDots}" -S ".Xresources.d" > /dev/null 2>&1 | tee -a "${logFolder}/setupLocalConfig.log"
   cd "$current_path"
 }
